@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ändi Dog</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<header class="top">
+  <h1>Ändi Dog<small>Du und Grün gegen Rot und Gelb</small></h1>
+  <button class="menuBtn" id="menuBtn" aria-label="Einstellungen" aria-expanded="false" aria-controls="menu"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
+  <div class="ctrl" id="menu" hidden>
+    <label>Ansicht <select id="view"><option value="2d">Flach</option><option value="3d">3D</option><option value="pov">Murmelsicht</option></select></label>
+    <label>Gegner <select id="lvl"><option value="easy">Leicht</option><option value="medium">Mittel</option><option value="hard" selected>Stark</option></select></label>
+    <label>Karten <select id="deck"><option value="fr">Französisch</option><option value="ch">Schweizer</option></select></label>
+    <label>Tempo <select id="spd"><option value="slow">Ruhig</option><option value="normal" selected>Normal</option><option value="fast">Zügig</option></select></label>
+    <div class="sep"></div>
+    <button class="btn" id="logBtn">Spielverlauf</button>
+    <button class="btn" id="statsBtn">Statistik</button>
+    <button class="btn" id="rulesBtn">Regeln &amp; Varianten</button>
+    <button class="btn" id="newBtn">Neues Spiel</button>
+  </div>
+</header>
+<main class="layout">
+  <div class="boardArea">
+  <div class="boardBox">
+    <div class="boardWrap"><svg id="board" viewBox="0 0 400 400" role="img" aria-label="Spielbrett"></svg></div>
+    <div id="over" hidden><div class="box"><h2 id="overTitle"></h2><p id="overText"></p><button class="btn primary" id="againBtn">Neues Spiel</button> <button class="btn" id="statsBtn2">Statistik</button><p class="overHint">Tippe daneben, um das Brett anzusehen.</p></div></div>
+  </div>
+  </div>
+  <section class="panel">
+    <div class="statusBox"><p id="status" aria-live="polite"></p>
+    <div id="learnAsk" class="learnAsk" hidden><p id="learnTxt"></p><div class="actions"><button class="btn primary" id="learnYes">Ja, so spiele ich</button><button class="btn" id="learnNo">Nein, Ausnahme</button></div></div>
+    <div id="jokerPick" hidden></div><button class="jkArrow l" id="jkL" hidden aria-label="Weitere Werte links">‹</button><button class="jkArrow r" id="jkR" hidden aria-label="Weitere Werte rechts">›</button></div>
+    <div id="hand"></div>
+    <div class="actions"><button class="btn primary" id="actBtn" hidden></button><button class="btn" id="cancelBtn" hidden>Zug abbrechen</button><button class="btn" id="undoBtn" hidden>↶ Letzten Zug zurücknehmen</button></div>
+  </section>
+</main>
+<dialog id="logDlg" aria-labelledby="logTitle">
+  <h2 id="logTitle">Spielverlauf</h2>
+  <ol id="log"></ol>
+  <p style="margin-top:14px"><button class="btn primary" id="logClose">Schliessen</button></p>
+</dialog>
+<dialog id="newDlg" aria-labelledby="newTitle">
+  <h2 id="newTitle">Neues Spiel</h2>
+  <p class="muted">Wähle die Regeln für dieses Spiel. Während des Spiels lassen sie sich nicht mehr ändern.</p>
+  <label class="opt"><input type="checkbox" id="ngCan"> Kanadische 7er-Regel: Mit jeder 7 darfst du auch die Murmeln deines Partners fahren.</label>
+  <label class="opt"><input type="checkbox" id="ngJok"> Die achte Murmel darf nicht mit dem Joker ins Ziel.</label>
+  <p class="muted" id="ngWarn" hidden>Das laufende Spiel wird beendet und nicht in der Statistik gezählt.</p>
+  <div class="actions" style="margin-top:14px"><button class="btn primary" id="ngStart">Spiel starten</button><button class="btn" id="ngCancel">Abbrechen</button></div>
+</dialog>
+<dialog id="stats" aria-labelledby="statsTitle">
+  <h2 id="statsTitle">Statistik</h2>
+  <div id="statsBody"></div>
+  <p style="margin-top:16px"><button class="btn" id="statsReset">Statistik zurücksetzen …</button></p>
+  <div id="statsConfirm" class="learnAsk danger" hidden role="alertdialog"><p>Alle gespeicherten Partien werden gelöscht. Was Grün gelernt hat, bleibt erhalten. Wirklich zurücksetzen?</p><div class="actions"><button class="btn primary" id="statsYes">Ja, löschen</button><button class="btn" id="statsNo">Abbrechen</button></div></div>
+  <p style="margin-top:14px"><button class="btn primary" id="statsClose">Schliessen</button></p>
+</dialog>
+<dialog id="rules">
+  <h2>So wird gespielt</h2>
+  <p>Du (Blau) spielst mit Grün gegen Rot und Gelb. Erst wenn alle acht Murmeln eines Teams im Ziel sind, hat das Team gewonnen. Gespielt und gefahren wird im Gegenuhrzeigersinn.</p>
+  <h3>Runden</h3>
+  <p>Es werden 6, 5, 4, 3 und 2 Karten verteilt, dann beginnt es wieder bei 6. In jeder Runde tauschen die Partner verdeckt eine Karte. Der Spielbeginn wandert jede Runde eine Person weiter. Wer mit keiner Karte fahren kann, scheidet für diese Runde aus, seine Karten verfallen.</p>
+  <h3>Karten</h3>
+  <ul>
+    <li><b>Ass</b>: Start oder 1 bzw. 11 vorwärts.</li>
+    <li><b>König</b>: Start oder 13 vorwärts.</li>
+    <li><b>Dame</b> (Ober): 12 vorwärts.</li>
+    <li><b>Bube</b> (Under): eine eigene Murmel mit einer des Gegners oder Partners tauschen, auch wenn das ein Nachteil ist. Ohne erlaubten Tausch kann er nicht gespielt werden.</li>
+    <li><b>4</b>: 4 vor- oder rückwärts.</li>
+    <li><b>7</b>: in beliebige Schritte vorwärts aufteilbar, alle 7 müssen gefahren werden. Jede überholte Murmel geht zurück in den Zwinger, auch die eigene.</li>
+    <li><b>Joker</b>: Start oder Einsatz nach Wunsch.</li>
+    <li><b>2, 3, 5, 6, 8, 9, 10</b>: so viele Felder vorwärts.</li>
+  </ul>
+  <h3>Wichtig</h3>
+  <ul>
+    <li>Landen zwei Murmeln auf demselben Feld, muss die zuerst dagewesene zurück in den Zwinger, auch eine eigene.</li>
+    <li>Eine Murmel, die vom Zwinger auf den Start kommt, blockiert den Durchgang für alle und ist geschützt. Kommt sie später erneut auf den Start, blockiert sie nicht mehr.</li>
+    <li>Ins Ziel geht’s erst, wenn der eigene Start zum zweiten Mal berührt wird, vor- oder rückwärts. Im Ziel wird nicht übersprungen und nicht rückwärts gefahren.</li>
+    <li>Der schnellste Weg: Start, mit der 4 zurück, dann mit 5 bis 8 direkt ins Ziel.</li>
+    <li>Sind alle eigenen Murmeln im Ziel, spielst du mit denen deines Partners weiter. Den Rest einer 7 darfst du dafür schon verwenden.</li>
+  </ul>
+  <h3>Varianten</h3>
+  <p class="muted">Die Varianten gelten fürs ganze Spiel. Wählen kannst du sie beim Start eines neuen Spiels (☰ → Neues Spiel).</p>
+  <label class="opt"><input type="checkbox" id="optCan" disabled> Kanadische 7er-Regel: Mit jeder 7 darfst du auch die Murmeln deines Partners fahren.</label>
+  <label class="opt"><input type="checkbox" id="optJok" disabled> Die achte Murmel darf nicht mit dem Joker ins Ziel.</label>
+  <h3>Grün lernt von dir</h3>
+  <label class="opt"><input type="checkbox" id="optLearn"> Grün passt seinen Spielstil und sein Tauschverhalten an dich an. Weicht ein Zug oder ein Tausch deutlich von Grüns Regeln ab, fragt die App nach, ob er das lernen soll.</label>
+  <p id="learnInfo" class="learnInfo"></p>
+  <p class="learnInfo">Feste Tauschregeln von dir (für Grün sowie Rot und Gelb auf „Stark“): Wer sich so oder so nicht bewegen kann, gibt dem Partner seine beste Karte – die 7, mit kanadischer Regel stattdessen die 4. Kommt der Partner nicht voran, man selbst aber schon, bekommt er König, Ass oder Joker, bzw. eine 4, wenn er blockiert ist. Je mehr Karten in der Runde, desto eher gibt man dabei auch teure Karten her. Kann der Partner einen Gegner heimschicken, bekommt er die passende Karte – zum Beispiel die Dame, wenn er frisch auf seinem Start steht und der Gegner nach ihm 4 vor seinem Ziel. Den Joker gibt man dafür nur her, wenn die Gegner nicht hinten liegen.</p>
+  <p class="learnInfo">Feste Regel von dir: Grün – und Rot und Gelb auf der Stufe „Stark“ – fahren nie mit der 4 vom eigenen Start zurück, wenn sie damit den Partner heimschicken. Ausser es gibt gar keinen anderen Zug.</p>
+  <p><button class="btn" id="learnReset">Gelerntes zurücksetzen …</button></p>
+  <div id="resetConfirm" class="learnAsk danger" hidden role="alertdialog" aria-labelledby="resetTxt"><p id="resetTxt">Alles, was Grün über deine Spielzüge und dein Tauschen gelernt hat, wird gelöscht. Er spielt danach wieder nach den Standardregeln. Wirklich zurücksetzen?</p><div class="actions"><button class="btn primary" id="resetYes">Ja, zurücksetzen</button><button class="btn" id="resetNo">Abbrechen</button></div></div>
+  <h3>Bedienung</h3>
+  <p>Tippe eine Karte, dann die markierte Murmel und das Zielfeld. Bei der 7 wählst du so lange Murmeln und Felder, bis alle sieben Schritte verteilt sind.</p>
+  <p>Unter „Ansicht“ kannst du das Brett in 3D drehen und zoomen. In der Murmelsicht fährt die Kamera mit der Murmel mit, die gerade unterwegs ist oder die du ausgewählt hast. Die Karte oben rechts zeigt dabei das ganze Brett von oben, und du kannst auch dort Murmeln und Felder antippen.</p>
+  <p style="margin-top:14px"><button class="btn primary" id="rulesClose">Verstanden</button></p>
+</dialog>
+<script type="module" src="/src/main.ts"></script>
+</body>
+</html>
