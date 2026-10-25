@@ -59,6 +59,8 @@ scripts/sim.ts  KI gegen KI ohne Oberfläche
 
 **Austeilen und Mischen.** Der Stapel wird wie am Tisch weiterverwendet und nur dann mit allen 110 Karten neu gemischt, wenn er nicht mehr für die ganze Runde reicht (`startRound()` in `app.ts`). Der Geber sitzt rechts vor dem Startspieler; der Stapel liegt in der Brettmitte auf seiner Seite. Ausgeteilt wird in Päckchen (6 = 3+3, 5 = 3+2, 4 = 3+1) mit Animation (`dealAnim()`).
 
+**Schatten ohne CSS-Filter.** Das flache Brett verwendet bewusst keinen `filter: drop-shadow`: Auf manchen Linux-Grafiktreibern (Chromium/Brave) blieben bei Grössenwechseln Reste älterer Bilder stehen. Der Brettschatten ist deshalb eine statische SVG-Grafik (`.boardShadow` in `index.html`), und jede Murmel hat einen eigenen Schattenkreis (`.mshadow`, Farbverlauf `#msh`), der mit ihr mitläuft (`render()` und `animateSeg()` in `app.ts`). Wer neue Elemente hinter dem Brett ergänzt, sollte dieselbe Regel beachten.
+
 **Regeln und Layout.** Die Varianten (kanadische 7, Joker-Verbot) werden nur beim Start eines neuen Spiels gewählt und gelten dann fürs ganze Spiel. Die Seite scrollt nie: Brett und Handkarten teilen sich die Bildschirmhöhe (`.layout`, `.boardArea` in `style.css`). Spielverlauf, Statistik und Regeln liegen als Dialoge im ☰-Menü.
 
 **Bedienung.** Für deinen Zug sind alle legalen Züge vorberechnet (`S.legal`). Jeder Tipp filtert die Kandidaten weiter: Karte → Murmel → Zielfeld (bei der Sieben mehrmals). So kann die Oberfläche nie einen regelwidrigen Zug zulassen.

@@ -34,8 +34,8 @@ const $=id=>document.getElementById(id);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 let S=null,UI=freshUI(),busy=false,TP=[];
 function freshUI(k){return {card:null,val:null,cand:null,k:0,temp:null,sel:null,applied:[],give:null,recv:k&&UI?UI.recv:null}}
-function delay(){return {slow:1500,normal:1000,fast:450}[S.speed]||1000}
-function stepMs(){return {slow:300,normal:200,fast:120}[S.speed]||200}
+function delay(){return{slow:1000,normal:450,fast:200}[S.speed]||450}
+function stepMs(){return {slow:200,normal:120,fast:100}[S.speed]||120}
 function rot(p,dx,dy){return p===0?[dx,dy]:p===1?[dy,-dx]:p===2?[-dx,-dy]:[-dy,dx]}
 // Geometrie nach dem Originalbrett (Vorlage: oberes Viertel, Start an der Spitze)
 const F=0.31;
@@ -64,6 +64,8 @@ function buildBoard(){
     el('stop',{offset:'0%','stop-color':'#fff','stop-opacity':'.9'},g);el('stop',{offset:'22%','stop-color':c[0]},g);
     el('stop',{offset:'60%','stop-color':c[1]},g);el('stop',{offset:'100%','stop-color':c[2]},g)});
   defs.insertAdjacentHTML('beforeend',SYMS);
+  // weicher Murmelschatten als Farbverlauf statt CSS-Filter
+  defs.insertAdjacentHTML('beforeend','<radialGradient id="msh"><stop offset="0" stop-color="#000" stop-opacity=".5"/><stop offset=".55" stop-color="#000" stop-opacity=".38"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>');
   TP=new Array(64);
   for(let p=0;p<4;p++)for(let j=0;j<16;j++)TP[(16*p-9+j+64)%64]=P(p,TT[j]);
   el('polygon',{points:'100 5 300 5 395 100 395 300 300 395 100 395 5 300 5 100',class:'octa'},svg);
@@ -94,6 +96,8 @@ function buildBoard(){
     el('text',{x:C+lx,y:C+ly-4,id:'lab'+c,class:'lab','text-anchor':'middle'},svg);
   }
   el('g',{id:'center'},svg);
+  el('g',{id:'mshadows'},svg);
+  for(let i=0;i<16;i++)el('circle',{r:9.6,cx:.7,cy:1.7,class:'mshadow',id:'ms'+i},$('mshadows'));
   el('g',{id:'marbles'},svg);
   for(let i=0;i<16;i++)el('circle',{r:8,cx:0,cy:0,class:'marble',id:'m'+i,fill:`url(#mg${i>>2})`},$('marbles'));
   el('g',{id:'hl'},svg);
@@ -339,8 +343,8 @@ async function animateSeg(ms,seg){
   const w=cloneMs(ms),m=w[seg.m];
   const toTop=id=>{const e=$('m'+id);e.parentNode.appendChild(e);e.getBoundingClientRect()};
   if(seg.t==='sw')toTop(seg.o);toTop(m.id);
-  const place=(x,dur,lift)=>{const e=$('m'+x.id);e.style.transitionDuration=dur+'ms';const [px,py]=marblePt(w,x);e.style.transform=`translate(${px}px,${py}px)`+(lift?' scale(1.2)':'')};
-  if(seg.t==='sw'){const o=w[seg.o];const l=m.loc,p=m.pos;m.loc=o.loc;m.pos=o.pos;o.loc=l;o.pos=p;place(m,750,true);place(o,750,true);await sleep(770);place(m,150);place(o,150);await sleep(160);for(const x of w)$('m'+x.id).style.transitionDuration='';return}
+  const place=(x,dur,lift)=>{const e=$('m'+x.id),sh=$('ms'+x.id);e.style.transitionDuration=sh.style.transitionDuration=dur+'ms';const [px,py]=marblePt(w,x);e.style.transform=sh.style.transform=`translate(${px}px,${py}px)`+(lift?' scale(1.2)':'')};
+  if(seg.t==='sw'){const o=w[seg.o];const l=m.loc,p=m.pos;m.loc=o.loc;m.pos=o.pos;o.loc=l;o.pos=p;place(m,750,true);place(o,750,true);await sleep(770);place(m,150);place(o,150);await sleep(160);for(const x of w){$('m'+x.id).style.transitionDuration='';$('ms'+x.id).style.transitionDuration=''}return}
   const steps=[];
   if(seg.t==='out')steps.push({loc:'T',pos:startOf(m.color),kill:true});
   else if(m.loc==='G'){for(let i=m.pos+1;i<=seg.end.pos;i++)steps.push({loc:'G',pos:i})}
@@ -357,7 +361,7 @@ async function animateSeg(ms,seg){
   }
   $('m'+m.id).classList.remove('moving');
   place(m,140);await sleep(150);
-  for(const x of w)$('m'+x.id).style.transitionDuration='';
+  for(const x of w){$('m'+x.id).style.transitionDuration='';$('ms'+x.id).style.transitionDuration=''}
 }
 function describe(p,mv,killed,before){
   const who=p===0?'Du':NAMES[p];
@@ -642,7 +646,7 @@ function undoMove(){
 // ---------- Rendering ----------
 function render(msg){
   const ms=UI.temp||S.marbles;
-  ms.forEach(m=>{const [x,y]=marblePt(ms,m);const e=$('m'+m.id);e.style.transform=`translate(${x}px,${y}px)`});
+  ms.forEach(m=>{const [x,y]=marblePt(ms,m);const t=`translate(${x}px,${y}px)`;$('m'+m.id).style.transform=t;$('ms'+m.id).style.transform=t});
   for(let p=0;p<4;p++){
     const l=$('lab'+p);const n=UI.dealt?UI.dealt[p]:S.hands[p].length;
     const starter=S.phase==='exchange'&&S.roundStart===p;
@@ -717,7 +721,7 @@ function renderStatus(msg){
   if(msg)t=msg;
   else if(S.phase==='over')t=S.winner===0?'Gewonnen!':'Verloren.';
   else if(UI.dealt){const d=(S.roundStart+3)%4;t=`${d===0?'Du gibst':NAMES[d]+' gibt'} die Karten aus …`}
-  else if(S.phase==='exchange'){const order=[0,1,2,3].map(i=>(S.roundStart+i)%4).map(q=>q===0?'du':NAMES[q]);t=`${S.roundStart===0?'Du beginnst':NAMES[S.roundStart]+' beginnt'} diese Runde (Reihenfolge: ${order.join(', ')}). Tippe eine Karte zweimal, um sie Grün zu geben.`}
+  else if(S.phase==='exchange'){const order=[0,1,2,3].map(i=>(S.roundStart+i)%4).map(q=>q===0?'du':NAMES[q]);t=`${S.roundStart===0?'Du beginnst':NAMES[S.roundStart]+' beginnt'} diese Runde. Tippe eine Karte zweimal, um sie Grün zu geben.`}
   else if(S.turn!==0)t=`${NAMES[S.turn]} ist am Zug …`;
   else{
     const c=ctrlColor(S.marbles,0);const pre=c!==0?'Deine Murmeln sind im Ziel – du spielst mit Grün. ':'';

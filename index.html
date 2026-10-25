@@ -4,18 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ändi Dog</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anonymous+Pro:ital,wght@0,400;0,700;1,400;1,700&family=Ubuntu+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
 </head>
 <body>
 <header class="top">
-  <h1>Ändi Dog<small>Du und Grün gegen Rot und Gelb</small></h1>
+  <h1></h1>
   <button class="menuBtn" id="menuBtn" aria-label="Einstellungen" aria-expanded="false" aria-controls="menu"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
   <div class="ctrl" id="menu" hidden>
-    <label>Ansicht <select id="view"><option value="2d">Flach</option><option value="3d">3D</option><option value="pov">Murmelsicht</option></select></label>
+    <label>Ansicht <select id="view"><option value="2d">Von oben</option><option value="3d">3D</option><option value="pov">POV ;-)</option></select></label>
     <label>Gegner <select id="lvl"><option value="easy">Leicht</option><option value="medium">Mittel</option><option value="hard" selected>Stark</option></select></label>
-    <label>Karten <select id="deck"><option value="fr">Französisch</option><option value="ch">Schweizer</option></select></label>
+    <label>Karten <select id="deck"><option value="fr">Französisch</option>
+      <!--<option value="ch">Schweizer</option>-->
+    </select></label>
     <label>Tempo <select id="spd"><option value="slow">Ruhig</option><option value="normal" selected>Normal</option><option value="fast">Zügig</option></select></label>
     <div class="sep"></div>
     <button class="btn" id="logBtn">Spielverlauf</button>
@@ -27,6 +29,7 @@
 <main class="layout">
   <div class="boardArea">
   <div class="boardBox">
+    <svg class="boardShadow" viewBox="0 0 400 400" aria-hidden="true"><defs><filter id="bsh1" x="-20%" y="-20%" width="140%" height="150%"><feGaussianBlur stdDeviation="5.5"/></filter><filter id="bsh2" x="-5%" y="-5%" width="110%" height="112%"><feGaussianBlur stdDeviation="1.2"/></filter></defs><polygon points="100 5 300 5 395 100 395 300 300 395 100 395 5 300 5 100" transform="translate(0 7.5)" fill="#000" fill-opacity=".36" filter="url(#bsh1)"/><polygon points="100 5 300 5 395 100 395 300 300 395 100 395 5 300 5 100" transform="translate(0 1.5)" fill="#000" fill-opacity=".22" filter="url(#bsh2)"/></svg>
     <div class="boardWrap"><svg id="board" viewBox="0 0 400 400" role="img" aria-label="Spielbrett"></svg></div>
     <div id="over" hidden><div class="box"><h2 id="overTitle"></h2><p id="overText"></p><button class="btn primary" id="againBtn">Neues Spiel</button> <button class="btn" id="statsBtn2">Statistik</button><p class="overHint">Tippe daneben, um das Brett anzusehen.</p></div></div>
   </div>
