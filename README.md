@@ -22,7 +22,7 @@ npm run dev          # Im Browser testen: http://localhost:5173
 Einmalig:
 
 ```bash
-# Vorher in capacitor.config.ts die appId anpassen, z. B. ch.deinname.aendidog
+# appId ist in capacitor.config.ts gesetzt: ch.aendi.aendidog
 npm run build
 npx cap add android  # legt den Ordner android/ an (ein normales Android-Studio-Projekt)
 ```
@@ -34,6 +34,30 @@ npm run android      # baut, kopiert nach android/ und öffnet Android Studio
 ```
 
 In Android Studio oben das Gerät wählen und auf ▶ (Run) klicken. Die APK für den Play Store entsteht über *Build → Generate Signed Bundle / APK*.
+
+## App-Icon
+
+Das Icon ist ein adaptives Icon für moderne Android-Geräte: ein achteckiges Holzbrett mit den vier Murmeln (Grün oben, Rot rechts, Blau unten = du, Gelb links) auf dunkelgrünem Grund. Die fertigen Dateien liegen im Projekt, du musst nichts erzeugen.
+
+```bash
+npx cap add android   # einmalig, falls android/ noch nicht existiert
+npm run icon:install  # kopiert android-icon/res nach android/app/src/main/res
+```
+
+`npm run android` erledigt den zweiten Schritt automatisch mit.
+
+Was drin ist:
+
+- **Adaptives Icon (Android 8+):** Hintergrund und Vordergrund als getrennte Vektoren. Jeder Launcher schneidet die Form selbst zu (Kreis, Squircle, abgerundetes Quadrat …).
+- **Themen-Icon (Android 13+):** eine einfarbige Ebene (`ic_aendi_monochrome.xml`). Das System färbt sie nach dem Hintergrundbild. In den Launcher-Einstellungen muss „Themen-Symbole“ eingeschaltet sein.
+- **Fallback (Android 6 und 7):** fertige PNGs in allen fünf Dichten, als Kreis und als abgerundetes Quadrat.
+- **Play Store:** `store/play-store-icon-512.png` (512 × 512) fürs Hochladen in der Play Console.
+- **Vorschau:** `store/icon-vorschau.png` zeigt das Icon mit verschiedenen Masken und in kleinen Grössen.
+- **Master:** `assets/icon.svg`.
+
+Die Ebenen heissen `ic_aendi_*` und kollidieren deshalb nicht mit den Standard-Icons von Capacitor. Überschrieben werden nur `ic_launcher.xml`, `ic_launcher_round.xml` und die `ic_launcher*.png`.
+
+**Icon ändern:** Farben und Geometrie stehen oben in `scripts/make-icon.mjs` (Abschnitt „Gestaltung“). Danach `npm run icon:build` (braucht `sharp`, kommt mit `npm install`) und `npm run icon:install`. Wichtig bei eigenen Änderungen: Adaptive Icons zeigen immer nur den mittleren Kreis von 66 der 108 Einheiten sicher an. Alles Wichtige gehört dort hinein.
 
 ## Projektstruktur
 
@@ -61,7 +85,9 @@ scripts/sim.ts  KI gegen KI ohne Oberfläche
 
 **Schatten ohne CSS-Filter.** Das flache Brett verwendet bewusst keinen `filter: drop-shadow`: Auf manchen Linux-Grafiktreibern (Chromium/Brave) blieben bei Grössenwechseln Reste älterer Bilder stehen. Der Brettschatten ist deshalb eine statische SVG-Grafik (`.boardShadow` in `index.html`), und jede Murmel hat einen eigenen Schattenkreis (`.mshadow`, Farbverlauf `#msh`), der mit ihr mitläuft (`render()` und `animateSeg()` in `app.ts`). Wer neue Elemente hinter dem Brett ergänzt, sollte dieselbe Regel beachten.
 
-**Regeln und Layout.** Die Varianten (kanadische 7, Joker-Verbot) werden nur beim Start eines neuen Spiels gewählt und gelten dann fürs ganze Spiel. Die Seite scrollt nie: Brett und Handkarten teilen sich die Bildschirmhöhe (`.layout`, `.boardArea` in `style.css`). Spielverlauf, Statistik und Regeln liegen als Dialoge im ☰-Menü.
+**Regeln, Karten und Tempo.** Der Menüeintrag „Regeln & Varianten“ und der Regeln-Dialog sind im Moment ausgeblendet. Text und Code sind noch da: In `app.ts` die Konstante `SHOW_RULES` auf `true` setzen, dann erscheinen sie wieder. Die Varianten (kanadische 7, Joker-Verbot) werden im Neues-Spiel-Dialog gewählt und gelten fürs ganze Spiel. „Grün lernt von dir“ steckt im Neues-Spiel-Dialog (Einschalten, Anzeige des Gelernten, Zurücksetzen). Die Karten sind nur noch französisch; der Schweizer Kartensatz ist im Code (`cards`/`SUIT_CH` in `app.ts`) noch vorhanden, aber nicht wählbar. Die drei Tempostufen sind so verschoben, dass „Normal“ dem früheren „Zügig“ entspricht (Tabellen `delay()`, `stepMs()`, `dealAnim()`, `flyToPile()`, `doExchange()`); ein gespeichertes Tempo wird einmalig umgerechnet (`spdV2`).
+
+**Layout.** Die Seite scrollt nie: Brett und Handkarten teilen sich die Bildschirmhöhe (`.layout`, `.boardArea` in `style.css`). Spielverlauf und Statistik liegen als Dialoge im ☰-Menü.
 
 **Bedienung.** Für deinen Zug sind alle legalen Züge vorberechnet (`S.legal`). Jeder Tipp filtert die Kandidaten weiter: Karte → Murmel → Zielfeld (bei der Sieben mehrmals). So kann die Oberfläche nie einen regelwidrigen Zug zulassen.
 

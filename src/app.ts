@@ -34,8 +34,8 @@ const $=id=>document.getElementById(id);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 let S=null,UI=freshUI(),busy=false,TP=[];
 function freshUI(k){return {card:null,val:null,cand:null,k:0,temp:null,sel:null,applied:[],give:null,recv:k&&UI?UI.recv:null}}
-function delay(){return{slow:1000,normal:450,fast:200}[S.speed]||450}
-function stepMs(){return {slow:200,normal:120,fast:100}[S.speed]||120}
+function delay(){return {slow:1000,normal:450,fast:200}[S.speed]||450}
+function stepMs(){return {slow:200,normal:120,fast:72}[S.speed]||120}
 function rot(p,dx,dy){return p===0?[dx,dy]:p===1?[dy,-dx]:p===2?[-dx,-dy]:[-dy,dx]}
 // Geometrie nach dem Originalbrett (Vorlage: oberes Viertel, Start an der Spitze)
 const F=0.31;
@@ -109,7 +109,7 @@ let UNDO=null; // Spielstand vor deinem letzten Zug (nur ein Schritt)
 let GAME=0; // wird bei jedem neuen Spiel erhöht; laufende Animationen des alten Spiels brechen dann ab
 function newGame(){
   GAME++;UNDO=null;ASK=null;if(typeof renderAsk==='function')renderAsk();
-  const keep=S?{level:S.level,speed:S.speed,deckStyle:S.deckStyle||'fr'}:{level:$('lvl').value,speed:$('spd').value,deckStyle:$('deck').value};
+  const keep=S?{level:S.level,speed:S.speed,deckStyle:'fr',spdV2:1}:{level:$('lvl').value,speed:$('spd').value,deckStyle:'fr',spdV2:1};
   S={opts:{canadian:OPT.canadian,jokerNo8:OPT.jokerNo8},marbles:initMarbles(),hands:[[],[],[],[]],deck:[],cycle:0,nextStart:0,roundStart:0,turn:0,phase:'exchange',gives:[null,null,null,null],last:null,log:[],winner:null,...keep};
   UI=freshUI();UI.recv=null;busy=false;$('over').hidden=true;
   startRound();
@@ -139,7 +139,7 @@ async function startRound(){
 // Austeilen sichtbar machen: verdeckte Karten fliegen vom Geber zu den Spielern; deine drehen sich in der Hand auf
 async function dealAnim(packs,order,dealer,g){
   UI.dealt=[0,0,0,0];busy=true;render();
-  const dur={slow:560,normal:400,fast:230}[S.speed]||400,from=deckScreenPt(),fs=pileScale()*16/(60*PS),jobs=[],cw=cardW();
+  const dur={slow:400,normal:230,fast:132}[S.speed]||230,from=deckScreenPt(),fs=pileScale()*16/(60*PS),jobs=[],cw=cardW();
   for(const k of packs)for(const p of order){
     const base=UI.dealt[p]+jobs.filter(j=>j.p===p&&!j.done).length,hr=$('hand').getBoundingClientRect();
     for(let i=0;i<k;i++){
@@ -159,7 +159,7 @@ async function doExchange(){
   {const {legal,...r}=S;UNDO=JSON.stringify(r)} // Tauschkarten der Computer stecken schon in S.gives und bleiben beim Undo gleich
   ASK=null;try{checkGiveLearn(S.marbles,S.hands[0],UI.give)}catch(e){console.error(e)}
   busy=true;$('actBtn').disabled=true;
-  const g=GAME,giveId=UI.give,old=handRects(),dur={slow:1600,normal:1150,fast:650}[S.speed]||1150;
+  const g=GAME,giveId=UI.give,old=handRects(),dur={slow:1150,normal:650,fast:367}[S.speed]||650;
   const gb=document.querySelector(`#hand .card[data-id="${giveId}"]`);
   const gHtml=gb?gb.innerHTML.replace(/<span class="tag">.*?<\/span>/,''):'',gCls=gb?'card'+(gb.classList.contains('red')?' red':'')+(gb.classList.contains('joker')?' joker':''):'card';
   // Tausch sofort ausführen; die erhaltene Karte bleibt unsichtbar, bis sie gelandet ist
@@ -264,7 +264,7 @@ function pileLandTf(c){
   }catch(e){return null}
 }
 function flyToPile(cards,p,faceUp,rects){
-  const dur={slow:950,normal:680,fast:400}[S.speed]||680,to=pilePt(),ps=pileScale();
+  const dur={slow:680,normal:400,fast:235}[S.speed]||400,to=pilePt(),ps=pileScale();
   return Promise.all(cards.map((c,i)=>{
     const r=rects&&rects[i],fr=r?[r.left+r.width/2,r.top+r.height/2,1,0]:[...seatPt(p),.55,0],rot=pileRot(c);
     return faceUp?flyCard(cardHTML(c),cardCls(c),fr,pileLandTf(c)||[...to,ps,rot],dur,i*90,[SH_FLY,SH_PILE]):flyCard('','back',fr,[...to,ps,rot+(i%2?6:-6)],dur,i*90);
@@ -280,7 +280,7 @@ function flyCard(html,cls,from,to,dur,wait,sh){
   return a.finished.then(()=>e.remove(),()=>e.remove());
 }
 async function animateExchange(giveId){
-  const dur={slow:1600,normal:1150,fast:650}[S.speed]||1150;
+  const dur={slow:1150,normal:650,fast:367}[S.speed]||650;
   const btn=document.querySelector(`#hand .card[data-id="${giveId}"]`);
   const hr=$('hand').getBoundingClientRect();
   const jobs=[];
@@ -546,7 +546,8 @@ function giveInfo(){
 }
 function learnInfo(){
   const el=$('learnInfo');if(!el)return;
-  if(!LEARN.n&&!LEARN.no&&!LEARN.gn){el.textContent=LEARN.on?'Noch nichts gelernt. Spiel einfach – Grün schaut zu.':'Ausgeschaltet. Grün spielt nach den Standardregeln.';return}
+  const on=$('newDlg').open?$('optLearn').checked:LEARN.on; // im Dialog gilt die Auswahl, die noch nicht gespeichert ist
+  if(!LEARN.n&&!LEARN.no&&!LEARN.gn){el.textContent=on?'Noch nichts gelernt. Spiel einfach – Grün schaut zu.':'Ausgeschaltet. Grün spielt nach den Standardregeln.';return}
   const w=LEARN.w,t=[];
   if(w.H>2)t.push('schlägt lieber Gegner');else if(w.H<-2)t.push('schont Gegner eher');
   if(w.G>2)t.push('bringt Murmeln lieber sofort ins Ziel');else if(w.G<-2)t.push('lässt sich mit dem Ziel Zeit');
@@ -554,7 +555,7 @@ function learnInfo(){
   if(w.R<W0.R-0.1)t.push('spielt vorsichtiger');else if(w.R>W0.R+0.1)t.push('nimmt mehr Risiko');
   if(w.A>W0.A+0.05)t.push('stellt sich angriffslustiger auf');else if(w.A<W0.A-0.05)t.push('achtet weniger auf Angriffschancen');
   if(w.C<W0.C-0.3)t.push('spart Joker, Sieben und Startkarten');else if(w.C>W0.C+0.3)t.push('setzt wertvolle Karten freizügiger ein');
-  el.textContent=`${LEARN.n} Züge gelernt, davon ${LEARN.yes} bestätigt; ${LEARN.no} abgelehnt. `+(t.length?'Grün '+(t.length>1?t.slice(0,-1).join(', ')+' und '+t[t.length-1]:t[0])+'.':'Noch kein deutlicher Unterschied zu den Standardregeln.')+(LEARN.on?'':' (Lernen ist ausgeschaltet; Grün spielt nach den Standardregeln.)');
+  el.textContent=`${LEARN.n} Züge gelernt, davon ${LEARN.yes} bestätigt; ${LEARN.no} abgelehnt. `+(t.length?'Grün '+(t.length>1?t.slice(0,-1).join(', ')+' und '+t[t.length-1]:t[0])+'.':'Noch kein deutlicher Unterschied zu den Standardregeln.')+(on?'':' (Lernen ist ausgeschaltet; Grün spielt nach den Standardregeln.)');
   el.textContent+=giveInfo();
 }
 // ===== Statistik =====
@@ -721,7 +722,7 @@ function renderStatus(msg){
   if(msg)t=msg;
   else if(S.phase==='over')t=S.winner===0?'Gewonnen!':'Verloren.';
   else if(UI.dealt){const d=(S.roundStart+3)%4;t=`${d===0?'Du gibst':NAMES[d]+' gibt'} die Karten aus …`}
-  else if(S.phase==='exchange'){const order=[0,1,2,3].map(i=>(S.roundStart+i)%4).map(q=>q===0?'du':NAMES[q]);t=`${S.roundStart===0?'Du beginnst':NAMES[S.roundStart]+' beginnt'} diese Runde. Tippe eine Karte zweimal, um sie Grün zu geben.`}
+  else if(S.phase==='exchange'){const order=[0,1,2,3].map(i=>(S.roundStart+i)%4).map(q=>q===0?'du':NAMES[q]);t=`${S.roundStart===0?'Du beginnst':NAMES[S.roundStart]+' beginnt'} diese Runde (Reihenfolge: ${order.join(', ')}). Tippe eine Karte zweimal, um sie Grün zu geben.`}
   else if(S.turn!==0)t=`${NAMES[S.turn]} ist am Zug …`;
   else{
     const c=ctrlColor(S.marbles,0);const pre=c!==0?'Deine Murmeln sind im Ziel – du spielst mit Grün. ':'';
@@ -748,15 +749,18 @@ function save(){try{const {legal,...rest}=S;localStorage.setItem(SAVE_KEY,JSON.s
 function load(){try{const s=localStorage.getItem(SAVE_KEY);return s?JSON.parse(s):null}catch(e){return null}}
 
 // ---------- Init ----------
+const SHOW_RULES=false; // true = „Regeln & Varianten“ (Menüeintrag und Regeln-Dialog) wieder einblenden; die Varianten stehen immer im Neues-Spiel-Dialog
 function init(){
   buildBoard();
+  $('rulesBtn').hidden=!SHOW_RULES;
+  // „Grün lernt von dir“ wohnt im Neues-Spiel-Dialog (die Blöcke stehen im HTML noch beim Regeltext)
+  $('newDlg').insertBefore($('learnBox1'),$('ngWarn'));$('newDlg').insertBefore($('learnBox2'),$('ngWarn'));
   $('lvl').onchange=e=>{S.level=e.target.value;save()};
   $('spd').onchange=e=>{S.speed=e.target.value;save()};
-  $('deck').onchange=e=>{S.deckStyle=e.target.value;save();render()};
   // Neues Spiel: Regeln (Varianten) werden nur hier gewählt und gelten dann fürs ganze Spiel
   const RULES_KEY='aendi-dog-rules';
-  const askNewGame=()=>{$('ngCan').checked=OPT.canadian;$('ngJok').checked=OPT.jokerNo8;$('ngWarn').hidden=!S||S.phase==='over';$('newDlg').showModal()};
-  $('ngStart').onclick=()=>{OPT.canadian=$('ngCan').checked;OPT.jokerNo8=$('ngJok').checked;$('optCan').checked=OPT.canadian;$('optJok').checked=OPT.jokerNo8;
+  const askNewGame=()=>{$('ngCan').checked=OPT.canadian;$('ngJok').checked=OPT.jokerNo8;$('optLearn').checked=LEARN.on;learnInfo();$('ngWarn').hidden=!S||S.phase==='over';$('newDlg').showModal()};
+  $('ngStart').onclick=()=>{OPT.canadian=$('ngCan').checked;OPT.jokerNo8=$('ngJok').checked;LEARN.on=$('optLearn').checked;saveLearn();$('optCan').checked=OPT.canadian;$('optJok').checked=OPT.jokerNo8;
     try{localStorage.setItem(RULES_KEY,JSON.stringify({canadian:OPT.canadian,jokerNo8:OPT.jokerNo8}))}catch(e){}
     $('newDlg').close();newGame()};
   $('ngCancel').onclick=()=>$('newDlg').close();
@@ -791,13 +795,13 @@ function init(){
    $('statsYes').onclick=()=>{STATS={games:[]};saveStats();closeRc();renderStats()};
    $('stats').addEventListener('close',closeRc)}
   loadLearn();$('optLearn').checked=LEARN.on;
-  $('optLearn').onchange=e=>{LEARN.on=e.target.checked;saveLearn();learnInfo();if(!LEARN.on){ASK=null;renderAsk()}};
+  $('optLearn').onchange=()=>learnInfo();
   {const rb=$('learnReset'),rc=$('resetConfirm');
    const closeRc=()=>{rc.hidden=true;rb.hidden=false};
    rb.onclick=()=>{rb.hidden=true;rc.hidden=false;$('resetNo').focus()};
    $('resetNo').onclick=()=>{closeRc();rb.focus()};
    $('resetYes').onclick=()=>{LEARN.w={...W0};LEARN.g=freshGive();LEARN.n=LEARN.yes=LEARN.no=LEARN.gn=0;ASK=null;renderAsk();saveLearn();closeRc();learnInfo();$('learnInfo').textContent='Zurückgesetzt. '+$('learnInfo').textContent};
-   $('rules').addEventListener('close',closeRc)}
+   $('newDlg').addEventListener('close',closeRc)}
   $('learnYes').onclick=()=>{if(!ASK)return;ASK.yes();LEARN.yes++;saveLearn();ASK=null;renderAsk()};
   $('learnNo').onclick=()=>{if(!ASK)return;LEARN.no++;saveLearn();ASK=null;renderAsk()};
   $('rulesClose').onclick=()=>$('rules').close();
@@ -805,7 +809,10 @@ function init(){
   $('optCan').onchange=syncOpt;$('optJok').onchange=syncOpt;
   const saved=load();
   if(saved&&saved.phase!=='over'&&saved.marbles){
-    S=saved;$('lvl').value=S.level||'hard';$('spd').value=S.speed||'normal';$('deck').value=S.deckStyle||'fr';
+    S=saved;S.deckStyle='fr'; // nur noch französische Karten
+    // Tempo-Stufen wurden verschoben (neu: Normal = früher Zügig). Gespeichertes Tempo einmalig umrechnen, damit es sich gleich anfühlt.
+    if(!S.spdV2){S.speed={slow:'slow',normal:'slow',fast:'normal'}[S.speed]||'normal';S.spdV2=1}
+    $('lvl').value=S.level||'hard';$('spd').value=S.speed||'normal';
     if(S.opts){OPT.canadian=!!S.opts.canadian;OPT.jokerNo8=!!S.opts.jokerNo8;$('optCan').checked=OPT.canadian;$('optJok').checked=OPT.jokerNo8}
     if(S.phase==='exchange')render();else proceed();
   }else{S=null;try{const r=JSON.parse(localStorage.getItem(RULES_KEY)||'null');if(r){OPT.canadian=!!r.canadian;OPT.jokerNo8=!!r.jokerNo8;$('optCan').checked=OPT.canadian;$('optJok').checked=OPT.jokerNo8}}catch(e){}

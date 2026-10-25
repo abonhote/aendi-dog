@@ -4,25 +4,22 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Ändi Dog</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Anonymous+Pro:ital,wght@0,400;0,700;1,400;1,700&family=Ubuntu+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
 <header class="top">
-  <h1></h1>
+  <h1>Ändi Dog</h1>
   <button class="menuBtn" id="menuBtn" aria-label="Einstellungen" aria-expanded="false" aria-controls="menu"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
   <div class="ctrl" id="menu" hidden>
-    <label>Ansicht <select id="view"><option value="2d">Von oben</option><option value="3d">3D</option><option value="pov">POV ;-)</option></select></label>
+    <label>Ansicht <select id="view"><option value="2d">Flach</option><option value="3d">3D</option><option value="pov">Murmelsicht</option></select></label>
     <label>Gegner <select id="lvl"><option value="easy">Leicht</option><option value="medium">Mittel</option><option value="hard" selected>Stark</option></select></label>
-    <label>Karten <select id="deck"><option value="fr">Französisch</option>
-      <!--<option value="ch">Schweizer</option>-->
-    </select></label>
     <label>Tempo <select id="spd"><option value="slow">Ruhig</option><option value="normal" selected>Normal</option><option value="fast">Zügig</option></select></label>
     <div class="sep"></div>
     <button class="btn" id="logBtn">Spielverlauf</button>
     <button class="btn" id="statsBtn">Statistik</button>
-    <button class="btn" id="rulesBtn">Regeln &amp; Varianten</button>
+    <button class="btn" id="rulesBtn" hidden>Regeln &amp; Varianten</button>
     <button class="btn" id="newBtn">Neues Spiel</button>
   </div>
 </header>
@@ -49,9 +46,12 @@
 </dialog>
 <dialog id="newDlg" aria-labelledby="newTitle">
   <h2 id="newTitle">Neues Spiel</h2>
-  <p class="muted">Wähle die Regeln für dieses Spiel. Während des Spiels lassen sie sich nicht mehr ändern.</p>
+  <p class="muted">Diese Einstellungen gelten für das ganze Spiel und lassen sich währenddessen nicht ändern.</p>
+  <div id="ngRules">
+  <h3>Varianten</h3>
   <label class="opt"><input type="checkbox" id="ngCan"> Kanadische 7er-Regel: Mit jeder 7 darfst du auch die Murmeln deines Partners fahren.</label>
   <label class="opt"><input type="checkbox" id="ngJok"> Die achte Murmel darf nicht mit dem Joker ins Ziel.</label>
+  </div>
   <p class="muted" id="ngWarn" hidden>Das laufende Spiel wird beendet und nicht in der Statistik gezählt.</p>
   <div class="actions" style="margin-top:14px"><button class="btn primary" id="ngStart">Spiel starten</button><button class="btn" id="ngCancel">Abbrechen</button></div>
 </dialog>
@@ -90,13 +90,17 @@
   <p class="muted">Die Varianten gelten fürs ganze Spiel. Wählen kannst du sie beim Start eines neuen Spiels (☰ → Neues Spiel).</p>
   <label class="opt"><input type="checkbox" id="optCan" disabled> Kanadische 7er-Regel: Mit jeder 7 darfst du auch die Murmeln deines Partners fahren.</label>
   <label class="opt"><input type="checkbox" id="optJok" disabled> Die achte Murmel darf nicht mit dem Joker ins Ziel.</label>
+  <div id="learnBox1">
   <h3>Grün lernt von dir</h3>
   <label class="opt"><input type="checkbox" id="optLearn"> Grün passt seinen Spielstil und sein Tauschverhalten an dich an. Weicht ein Zug oder ein Tausch deutlich von Grüns Regeln ab, fragt die App nach, ob er das lernen soll.</label>
   <p id="learnInfo" class="learnInfo"></p>
+  </div>
   <p class="learnInfo">Feste Tauschregeln von dir (für Grün sowie Rot und Gelb auf „Stark“): Wer sich so oder so nicht bewegen kann, gibt dem Partner seine beste Karte – die 7, mit kanadischer Regel stattdessen die 4. Kommt der Partner nicht voran, man selbst aber schon, bekommt er König, Ass oder Joker, bzw. eine 4, wenn er blockiert ist. Je mehr Karten in der Runde, desto eher gibt man dabei auch teure Karten her. Kann der Partner einen Gegner heimschicken, bekommt er die passende Karte – zum Beispiel die Dame, wenn er frisch auf seinem Start steht und der Gegner nach ihm 4 vor seinem Ziel. Den Joker gibt man dafür nur her, wenn die Gegner nicht hinten liegen.</p>
   <p class="learnInfo">Feste Regel von dir: Grün – und Rot und Gelb auf der Stufe „Stark“ – fahren nie mit der 4 vom eigenen Start zurück, wenn sie damit den Partner heimschicken. Ausser es gibt gar keinen anderen Zug.</p>
+  <div id="learnBox2">
   <p><button class="btn" id="learnReset">Gelerntes zurücksetzen …</button></p>
   <div id="resetConfirm" class="learnAsk danger" hidden role="alertdialog" aria-labelledby="resetTxt"><p id="resetTxt">Alles, was Grün über deine Spielzüge und dein Tauschen gelernt hat, wird gelöscht. Er spielt danach wieder nach den Standardregeln. Wirklich zurücksetzen?</p><div class="actions"><button class="btn primary" id="resetYes">Ja, zurücksetzen</button><button class="btn" id="resetNo">Abbrechen</button></div></div>
+  </div>
   <h3>Bedienung</h3>
   <p>Tippe eine Karte, dann die markierte Murmel und das Zielfeld. Bei der 7 wählst du so lange Murmeln und Felder, bis alle sieben Schritte verteilt sind.</p>
   <p>Unter „Ansicht“ kannst du das Brett in 3D drehen und zoomen. In der Murmelsicht fährt die Kamera mit der Murmel mit, die gerade unterwegs ist oder die du ausgewählt hast. Die Karte oben rechts zeigt dabei das ganze Brett von oben, und du kannst auch dort Murmeln und Felder antippen.</p>

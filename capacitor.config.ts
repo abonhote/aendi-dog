@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  // Eindeutige App-ID (umgekehrte Domain). Vor dem ersten „cap add android“ anpassen,
-  // später nur noch mit Aufwand änderbar.
+  // Eindeutige App-ID (umgekehrte Domain). Muss vor dem ersten „cap add android“ feststehen,
+  // später (und im Play Store ohnehin) nur noch mit grossem Aufwand änderbar.
   appId: 'ch.aendi.aendidog',
   appName: 'Ändi Dog',
   webDir: 'dist',
