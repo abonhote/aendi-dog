@@ -1,6 +1,6 @@
 # Ändi Dog
 
-Ändi Dog als Web-App und Android-App (Capacitor). Du spielst Blau mit Grün gegen Rot und Gelb.
+Ändi Dog als Web-App und Android-App (Capacitor). Step-by-step mit Claude und Claude Code erstellt, immer wieder von Menschen (von mir) getestet. Kein fire-and-forget-Agentic-Coding.
 
 ## Version
 
