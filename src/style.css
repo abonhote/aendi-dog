@@ -22,6 +22,7 @@
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *,*::before,*::after{box-sizing:inherit}
+[hidden]:not([hidden=until-found i]){display:none!important}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 "Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-tap-highlight-color:transparent;height:100%;overflow:hidden;display:flex;flex-direction:column}
 html{height:100vh;height:100dvh;overflow:hidden}
 button,select{font:inherit;color:inherit}
@@ -38,6 +39,7 @@ h1 small{display:block;font-weight:500;font-size:15px;letter-spacing:0;color:var
 .ctrl select{width:100%;padding:9px 12px;font-size:15px}
 .ctrl .btn{width:100%;padding:11px;font-size:15px;border-radius:12px}
 .ctrl .sep{height:1px;background:var(--line);margin:2px 0}
+.ctrl .ver{margin:0;text-align:center;font-size:12px;color:var(--muted)}
 select,.btn{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:14px;cursor:pointer}
 .btn.primary{background:var(--ink);color:var(--bg);border-color:var(--ink);font-weight:700}
 /* Ganze Seite ohne Scrollen: Kopf + Brett + Hand teilen sich genau die Bildschirmhöhe.
@@ -45,8 +47,6 @@ select,.btn{background:var(--panel);border:1px solid var(--line);border-radius:9
 .layout{flex:1 1 auto;min-height:0;width:100%;max-width:1060px;margin:0 auto;padding:8px 12px 10px;display:flex;flex-direction:column;gap:10px}
 .boardArea{flex:1 1 0;min-height:0;min-width:0;display:grid;place-items:center;container-type:size}
 @media (min-aspect-ratio:5/4){.layout{flex-direction:row;align-items:stretch;gap:20px}.layout>.panel{flex:0 0 clamp(250px,34vw,380px);justify-content:safe center;overflow-y:auto}}
-/* Rückfrage von „Grün lernt“ schwebt über dem Brett, damit sich das Layout nicht verschiebt */
-#learnAsk{position:fixed;z-index:30;left:50%;transform:translateX(-50%);width:min(520px,calc(100vw - 24px));top:calc(env(safe-area-inset-top,0px) + 62px);box-shadow:0 18px 40px -12px rgba(0,0,0,.5)}
 .boardBox{position:relative;width:min(100cqw,100cqh);aspect-ratio:1;isolation:isolate}
 /* Schatten des Bretts als eigene, statische Grafik: kein CSS-Filter auf dem animierten Brett (Chromium/Linux zeichnete damit Reste) */
 .boardShadow{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:-1}
@@ -81,12 +81,15 @@ select,.btn{background:var(--panel);border:1px solid var(--line);border-radius:9
 .mshadow{fill:url(#msh);transition:transform .32s cubic-bezier(.3,.7,.3,1);pointer-events:none}
 .ccard{fill:var(--card);stroke:rgba(0,0,0,.18);stroke-width:1;filter:drop-shadow(0 2px 0 rgba(0,0,0,.12)) drop-shadow(0 3px 3px rgba(0,0,0,.25))}
 .cstack{fill:var(--card);stroke:rgba(0,0,0,.3);stroke-width:.8}
-.deckc{fill:#a83232;stroke:#fffdf7;stroke-width:1.3;filter:drop-shadow(0 1px 1px rgba(0,0,0,.35))}
-.learnAsk{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--c2);border-radius:12px;padding:10px 12px}
-.learnAsk[hidden]{display:none}
-.learnAsk p{margin:0 0 10px;font-size:15px}
-.learnAsk.danger{border-left-color:var(--c1)}
+.deckc{fill:#a83232;stroke:#fffdf7;stroke-width:1.7;filter:drop-shadow(0 1px 1px rgba(0,0,0,.35))}
+.confirmBox{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--c2);border-radius:12px;padding:10px 12px}
+.confirmBox[hidden]{display:none}
+.confirmBox p{margin:0 0 10px;font-size:15px}
+.confirmBox.danger{border-left-color:var(--c1)}
 .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:6px 0 4px}
+.tiles.t3{grid-template-columns:repeat(3,1fr)}
+.cmp .tm{display:block;color:var(--muted);font-size:10.5px;font-weight:400;line-height:1.2;white-space:nowrap}
+.cmp.tight{font-size:12px}.cmp.tight th,.cmp.tight td{padding:6px 2px}
 .tiles div{background:var(--bg);border-radius:12px;padding:10px 4px;text-align:center}
 .tiles b{display:block;font:800 22px "Bricolage Grotesque",system-ui,sans-serif}
 .tiles span{font-size:12px;color:var(--muted)}
@@ -105,8 +108,30 @@ select,.btn{background:var(--panel);border:1px solid var(--line);border-radius:9
 .cmp th{font-weight:700;color:var(--muted);font-size:12px}
 .cmp th:first-child,.cmp td:first-child{text-align:left}
 .cmp td.w{color:var(--c2);font-weight:700}.cmp td.l{color:var(--c1)}
+.chart .tA{fill:var(--c0)}.chart .tB{fill:var(--c1)}.chart .cnt{fill:#fff;font-size:9.5px;font-weight:700}.chart .flag{font-size:9.5px;font-weight:700;fill:var(--ink)}
+.dot.tA{background:var(--c0)}.dot.tB{background:var(--c1)}
+.chart .lk{fill:#9aa59f}.chart .lt{fill:#d9a441}.chart .lg{fill:#3f9b6a}.chart .lab2{font-size:10px;fill:var(--muted)}
+.dot.lk{background:#9aa59f}.dot.lt{background:#d9a441}.dot.lg{background:#3f9b6a}
+/* Einstellungen: kompakt – je Spieler eine Zeile, darunter die Spiel-Optionen in zwei Spalten */
+#setDlg{max-width:420px}
+#setDlg h2{margin-bottom:10px}
+.setGrid{display:grid;grid-template-columns:auto 1fr auto;gap:7px 10px;align-items:center}
+.seatRole{font-size:14px;font-weight:700;white-space:nowrap}
+.setGrid input{font:inherit;font-size:16px;padding:7px 10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--cardInk);width:100%;min-width:0}
+.colBtn{display:flex;align-items:center;gap:4px;padding:4px 6px 4px 5px;border-radius:999px;border:1px solid var(--line);background:var(--card);cursor:pointer;color:var(--cardInk)}
+.colBtn .chip,.swatch{width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff 0,var(--sw) 45%,color-mix(in srgb,var(--sw) 55%,#000) 100%);box-shadow:0 1px 3px rgba(0,0,0,.35)}
+.colBtn .caret{font-size:11px;opacity:.7}
+.colPop{position:absolute;z-index:5;display:grid;grid-template-columns:repeat(5,30px);gap:9px;padding:11px;background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 28px rgba(0,0,0,.28)}
+.colPop[hidden]{display:none}
+.swatch{position:relative;width:30px;height:30px;border:2px solid transparent;padding:0;cursor:pointer}
+.swatch[aria-selected="true"]{border-color:var(--ink);outline:2px solid var(--panel);outline-offset:-4px}
+.swatch.taken::after{content:"";position:absolute;right:-2px;bottom:-2px;width:10px;height:10px;border-radius:50%;background:var(--panel);border:2px solid var(--muted)}
+.setSel{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.setSel label{display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--muted)}
+.setSel select{font:inherit;font-size:15px;padding:7px 8px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--cardInk)}
+#setDlg .actions{margin-top:14px;flex-wrap:wrap}
+.btn.plain{background:none;border:none;color:var(--muted);text-decoration:underline;padding:6px 2px}
 .muted{color:var(--muted);font-size:13.5px}
-.learnInfo{font-size:14px;color:var(--muted)}
 .crank{font:800 19px "Bricolage Grotesque",system-ui,sans-serif;fill:var(--cardInk)}
 .crank.jo{font-size:14px}
 .csuit{font:24px "Atkinson Hyperlegible",system-ui,sans-serif;fill:var(--cardInk)}
@@ -122,6 +147,9 @@ select,.btn{background:var(--panel);border:1px solid var(--line);border-radius:9
 #status{margin:0;font-size:16px;font-weight:700;min-height:2.7em;line-height:1.35}
 :root{--cw:60px;--chh:86px}
 #hand{display:flex;flex-wrap:wrap;gap:8px;min-height:calc(var(--chh) + 6px);align-items:flex-end}
+/* Karten lassen sich auch ziehen und aufs Brett werfen */
+#hand .card{touch-action:none;-webkit-user-drag:none;user-select:none;-webkit-user-select:none}
+#hand .card.drag{transition:none!important;z-index:6;cursor:grabbing;box-shadow:0 16px 26px -8px rgba(0,0,0,.5)}
 .card{position:relative;width:var(--cw);height:var(--chh);border-radius:9px;border:1px solid rgba(0,0,0,.18);background:var(--card);color:var(--cardInk);
   cursor:pointer;padding:6px;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;
   box-shadow:0 2px 0 rgba(0,0,0,.12),0 4px 10px -6px rgba(0,0,0,.5);transition:transform .15s ease,opacity .15s}
@@ -144,13 +172,13 @@ select,.btn{background:var(--panel);border:1px solid var(--line);border-radius:9
 .card .tag{position:absolute;left:50%;bottom:-9px;transform:translateX(-50%);background:var(--c2);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:999px;white-space:nowrap}
 .empty{color:var(--muted);margin:0;align-self:center}
 /* Joker-Auswahl liegt über der Statuszeile (gleiche Höhe), damit sich das Brett nicht verschiebt */
-.statusBox{display:grid;min-height:44px;position:relative}
+.statusBox{display:grid;min-height:var(--statusH,44px);position:relative}
 /* Pfeile an der Joker-Leiste: zeigen, dass es seitlich weitergeht (antippen = weiterblättern) */
 .jkArrow{position:absolute;top:0;bottom:0;width:46px;border:0;padding:0 4px;z-index:2;font:800 26px/1 system-ui,sans-serif;color:var(--ink);cursor:pointer;display:flex;align-items:center}
 .jkArrow.r{right:0;justify-content:flex-end;background:linear-gradient(to right,transparent,var(--bg) 55%)}
 .jkArrow.l{left:0;justify-content:flex-start;background:linear-gradient(to left,transparent,var(--bg) 55%)}
 .jkArrow[hidden]{display:none}
-@media (max-height:760px){.statusBox{min-height:41px}}
+@media (max-height:760px){.statusBox{min-height:var(--statusH,41px)}}
 .statusBox>#status,.statusBox>#jokerPick{grid-area:1/1}
 #jokerPick{display:flex;flex-wrap:nowrap;gap:6px;align-self:center;overflow-x:auto;background:var(--bg);z-index:1;height:40px;align-items:center;scrollbar-width:none}
 #jokerPick::before{content:"Joker als";align-self:center;font-weight:700;font-size:14px;white-space:nowrap;margin-right:2px}
@@ -158,8 +186,6 @@ select,.btn{background:var(--panel);border:1px solid var(--line);border-radius:9
 /* Platz für eine Knopfzeile immer reservieren, damit das Brett nicht springt, wenn „Zug abbrechen“ erscheint */
 .panel>.actions{min-height:42px}
 @media (max-height:760px){.panel>.actions{min-height:37px}}
-.overHint{margin:12px 0 0!important;font-size:12.5px;color:var(--muted)}
-#over{cursor:pointer}#over .box{cursor:default}
 #jokerPick button{flex:none;min-width:38px;height:38px;border-radius:8px;border:1px solid var(--line);background:var(--panel);font-weight:700;cursor:pointer}
 #jokerPick button.on{background:var(--ink);color:var(--bg)}
 .actions{display:flex;gap:8px;flex-wrap:wrap}
@@ -180,16 +206,15 @@ dialog h3{margin:16px 0 4px;font-size:16px}
 dialog p,dialog li{font-size:15px;margin:4px 0}
 dialog ul{padding-left:18px;margin:4px 0}
 .opt{display:flex;gap:10px;align-items:flex-start;font-size:15px;margin:8px 0;cursor:pointer}.opt input{margin-top:3px;width:18px;height:18px;accent-color:var(--c0)}
-#over{position:absolute;inset:0;display:grid;place-items:center;background:rgba(20,14,8,.4);clip-path:polygon(25% 1.25%,75% 1.25%,98.75% 25%,98.75% 75%,75% 98.75%,25% 98.75%,1.25% 75%,1.25% 25%)}
-#over[hidden]{display:none}
-#over .box{background:var(--panel);color:var(--ink);border-radius:18px;padding:22px 26px;text-align:center;max-width:80%}
-#over h2{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-size:34px;margin:0 0 6px}
-#over p{margin:0 0 14px}
 @media (prefers-reduced-motion:reduce){.marble,.mshadow,.card{transition:none}.canring,.target{animation:none}}
 @media (max-width:420px){:root{--cw:52px;--chh:74.5px}.card{border-radius:7.8px;padding:5.2px}.card .r{font-size:16.5px}.card .s{font-size:20.8px}.card .si{width:24.3px;height:24.3px}.card.joker .r{font-size:12.1px}#hand{gap:6px}}
 /* Niedrige Bildschirme (kleine Handys, Querformat): Kopf und Karten kompakter */
 @media (max-height:760px){h1{font-size:28px}h1 small{display:none}.menuBtn{width:40px;height:40px}.top{padding-top:8px}.layout{padding-top:4px;gap:8px}.panel{gap:6px}#status{font-size:15px}.actions .btn{padding:7px 12px;font-size:14px}}
+/* Schmale Handys: Sechs Karten müssen in eine Reihe passen, sonst bricht die Hand um, wird höher und das Brett springt */
+@media (max-width:375px){:root{--cw:50px;--chh:71.6px}}
+@media (max-width:353px){:root{--cw:46px;--chh:65.9px}}
 @media (max-height:640px){:root{--cw:46px;--chh:66px}.card{border-radius:7px;padding:4.6px}.card .r{font-size:14.6px}.card .s{font-size:18.4px}.card .si{width:21.5px;height:21.5px}.card.joker .r{font-size:10.7px}#hand{gap:5px}#status{min-height:2.6em}}
+@media (max-width:329px){:root{--cw:42px;--chh:60.2px}}
 .cardDemo{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-end;margin:10px 0 4px}
 .cardDemo figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
 .cardDemo .card{cursor:default;width:60px;height:86px;border-radius:9px;padding:6px}
@@ -200,7 +225,6 @@ dialog ul{padding-left:18px;margin:4px 0}
 .boardBox.is3d{filter:none}
 .boardBox.is3d .view3d{display:block}
 .boardBox.is3d .boardWrap{opacity:0;pointer-events:none}
-.boardBox.is3d #over{clip-path:none;border-radius:20px}
 #gl{display:block;width:100%;height:100%;border-radius:20px;touch-action:none;cursor:grab;outline-offset:-3px}
 #gl.dragging{cursor:grabbing}
 #labs3d{position:absolute;inset:0;pointer-events:none;overflow:hidden;border-radius:20px}
@@ -215,3 +239,8 @@ dialog ul{padding-left:18px;margin:4px 0}
 .hint3d{position:absolute;left:12px;right:60px;bottom:10px;margin:0;padding:8px 12px;border-radius:12px;background:var(--panel);color:var(--ink);font-size:14px;box-shadow:0 2px 10px rgba(0,0,0,.2);pointer-events:none;max-width:420px}
 .hint3d[hidden]{display:none}
 @media (prefers-reduced-motion:reduce){.lab3d{transition:none}}
+/* Gewinnanimation: über dem ganzen Bildschirm, das Brett bleibt dahinter sichtbar; unten rechts der Knopf „Neues Spiel“ */
+#winScrim{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .5s;z-index:40}
+#winFx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:41}
+#newFloat{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:42;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+#newFloat[hidden]{display:none}

@@ -4,7 +4,7 @@
  * Die SVG-Ansicht in app.ts bleibt die Quelle der Wahrheit; diese Datei liest jedes Bild die
  * Murmel-Positionen und Markierungen aus dem SVG und zeichnet sie räumlich.
  */
-import { $, C, MCOL, NAMES, P, PS, S, SUIT_CH, SYMS, TP, UI, busy, deckPos, el, goalPt, isCH, isRed, kennelPt, onBoardClick, pileCards, pileCount, pileRot, pts, rankLabel, rot, seatPt, setSeatPt } from './app';
+import { $, C, DECK_SCALE, MCOL, NAMES, P, PS, S, SUIT_CH, SYMS, TP, UI, busy, deckPos, el, goalPt, isCH, isRed, kennelPt, onBoardClick, pileCards, pileCount, pileRot, pts, rankLabel, rot, seatPt, setSeatPt } from './app';
 import { ctrlColor, startOf } from './engine';
 
 // ===== 3D-Ansicht (WebGL, ohne Bibliotheken) =====
@@ -296,10 +296,10 @@ function scene(cam,isMini,t){
   if(!isMini)for(let i=0;i<16;i++){const q=MP[i];const lift=q.w[1]-5;const r=9+lift*.25;draw(G.disc,{at:[q.w[0]+1.2+lift*.2,0,q.w[2]-1.8-lift*.3],s:[r,1,r],mode:M_RAD,col:[0,0,0,Math.max(0,.55-lift*.02)]})}
   if(S&&S.deck&&S.deck.length&&S.phase!=='over'){ // Kartenstapel beim Geber
     const dp=deckPos(),dh=Math.max(.6,S.deck.length*.12),at=W(dp.x,dp.y,0);
-    if(!isMini)draw(G.disc,{at:[at[0]+1.5,0,at[2]-1.5],s:[15+dh*.3,1,18+dh*.3],mode:M_RAD,col:[0,0,0,.3]});
-    decal(false);draw(G.stack,{at,s:[16,dh,22],rot:dp.d*Math.PI/2,mode:6,col:rgba(COL.raw.card),amb:.6});decal(true);
+    if(!isMini)draw(G.disc,{at:[at[0]+2+dh*.15,0,at[2]-3-dh*.2],s:[(46+dh*.8)*DECK_SCALE,1,(54+dh*.8)*DECK_SCALE],mode:M_RAD,col:[0,0,0,.3+Math.min(.15,dh*.012)]});
+    decal(false);draw(G.stack,{at,s:[45*DECK_SCALE,dh,65*DECK_SCALE],rot:-dp.a*Math.PI/180,mode:6,col:rgba(COL.raw.card),amb:.6});decal(true);
     if(!backTex)backTex=makeBackTex();
-    draw(G.card,{at:[at[0],dh+.12,at[2]],s:[16/(60*PS),1,22/(86*PS)],rot:dp.d*Math.PI/2,mode:M_TEX,tex:backTex,amb:isMini?1:.78});
+    draw(G.card,{at:[at[0],dh+.12,at[2]],s:[DECK_SCALE,1,DECK_SCALE],rot:-dp.a*Math.PI/180,mode:M_TEX,tex:backTex,amb:isMini?1:.78});
   }
   if(S&&S.last&&cardTex.length){
     const pn=pileCount(),hh=Math.max(.5,Math.min(110,pn)*.12),pc=pileCards();
@@ -352,7 +352,7 @@ function frame(t){
   }else miniRect=null;
   {const l=S.last,pt=l&&project(curMain,W(C,C+35,2));
     if(!pt||Math.abs(pt[0])>1.05||Math.abs(pt[1])>1.05)PILE3D.style.visibility='hidden';
-    else{const t=(l.p===0?'du':NAMES[l.p])+(l.card.r==='JO'?' · als '+rankLabel(l.val):'');if(PILE3D.textContent!==t)PILE3D.textContent=t;PILE3D.style.color=`var(--c${l.p})`;
+    else{const t=(l.p===0?'du':NAMES[l.p])+(l.card.r==='JO'&&l.val?' · als '+rankLabel(l.val):'')+(l.fold?' · abgelegt':'');if(PILE3D.textContent!==t)PILE3D.textContent=t;PILE3D.style.color=`var(--c${l.p})`;
       PILE3D.style.visibility='';PILE3D.style.transform=`translate(${((pt[0]*.5+.5)*w).toFixed(1)}px,${((.5-pt[1]*.5)*h).toFixed(1)}px) translate(-50%,-50%) scale(.72)`}}
   for(let p=0;p<4;p++){const d=LABS[p];const pt=project(curMain,W(+d.dataset.x,+d.dataset.y,10));
     if(!pt||Math.abs(pt[0])>1.05||Math.abs(pt[1])>1.05){d.style.visibility='hidden';continue}

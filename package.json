@@ -1,7 +1,7 @@
 {
   "name": "aendi-dog",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.15",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "check": "tsc",
     "sim": "tsx scripts/sim.ts",
-    "android": "npm run build && npm run icon:install && npx cap sync android && npx cap open android",
+    "android": "npm run build && npm run icon:install && npx cap sync android && npm run android:offline && npx cap open android",
+    "android:offline": "node scripts/android-offline.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "icon:build": "node scripts/make-icon.mjs",
@@ -17,7 +18,9 @@
   },
   "dependencies": {
     "@capacitor/android": "^7.0.0",
-    "@capacitor/core": "^7.0.0"
+    "@capacitor/core": "^7.0.0",
+    "@fontsource/atkinson-hyperlegible": "^5.0.0",
+    "@fontsource/bricolage-grotesque": "^5.0.0"
   },
   "devDependencies": {
     "@capacitor/cli": "^7.0.0",

@@ -223,35 +223,84 @@ export function applyAll(ms: Board, segs: Seg[]): { ms: Board; killed: number[] 
 
 // ---------------------------------------------------------------- Zuggenerierung
 
+// ---------------------------------------------------------------- Die Sieben
+//
+// Die Sieben darf in beliebige Schritte aufgeteilt werden; alle 7 Punkte müssen gefahren werden. Dieselbe Murmel darf
+// dabei mehrmals vorkommen, und die Murmeln dürfen sich beliebig abwechseln (A +1, B +2, A +3, B +1 …). Die
+// Reihenfolge zählt für das Heimschicken: Jede Murmel, die ein Teilschritt überholt, geht heim – auch eine eigene.
+
+/** Bewegbare Farben: eigene (mit kanadischer Regel auch die des Partners); sind alle eigenen im Ziel, die des Partners. */
+function sevenColors(cur: Board, p: number): number[] {
+  return OPT.canadian && !allHome(cur, p) ? [p, (p + 2) % 4] : [ctrlColor(cur, p)];
+}
+
+/** Alle Einzelschritte (eine Murmel, 1..rem Felder), die als Nächstes möglich sind. Grosse Schritte zuerst. */
+function sevenSteps(cur: Board, p: number, rem: number): MoveSeg[] {
+  const out: MoveSeg[] = [];
+  for (const c of sevenColors(cur, p)) for (let i = 0; i < 4; i++) {
+    const m = cur[c * 4 + i];
+    if (m.loc === 'K') continue;
+    for (let s = rem; s >= 1; s--) for (const path of fwdPaths(cur, m, s)) out.push(mvSeg(m, path, s, true));
+  }
+  return out;
+}
+
+/** Lässt sich die Sieben von dieser Stellung aus noch zu Ende fahren? (Ergebnisse je Stellung werden gemerkt.) */
+function canFinish7(cur: Board, p: number, rem: number, memo: Map<string, boolean>): boolean {
+  if (rem === 0) return true;
+  const k = stateKey(cur) + '|' + rem;
+  const hit = memo.get(k);
+  if (hit !== undefined) return hit;
+  let ok = false;
+  for (const seg of sevenSteps(cur, p, rem)) {
+    const nx = cloneMs(cur);
+    applySeg(nx, seg);
+    if (canFinish7(nx, p, rem - seg.n, memo)) { ok = true; break; }
+  }
+  memo.set(k, ok);
+  return ok;
+}
+
 /**
- * Alle Aufteilungen der Sieben. Rekursiv: eine Murmel wählen, 1..rest Schritte
- * fahren, mit dem Rest weitermachen. Die Reihenfolge zählt (wer zuerst fährt,
- * kann andere überholen). Mit dedupe=true werden Züge mit gleichem Endzustand
- * nur einmal geliefert (für die KI); die Oberfläche braucht alle Reihenfolgen.
+ * Für die Oberfläche: Einzelschritte, nach denen sich die Sieben noch vollständig fahren lässt
+ * (rem = übrige Schritte). So landet man nie in einer Sackgasse.
  */
-function gen7(ms: Board, p: number, dedupe: boolean): { segs: Seg[] }[] {
-  const out: { segs: Seg[] }[] = [], seen = new Set<string>(), used = new Set<number>(), segs: Seg[] = [];
-  const rec = (cur: Board, rem: number) => {
+export function sevenOptions(ms: Board, p: number, rem: number): MoveSeg[] {
+  const memo = new Map<string, boolean>();
+  return sevenSteps(ms, p, rem).filter(seg => {
+    const nx = cloneMs(ms);
+    applySeg(nx, seg);
+    return canFinish7(nx, p, rem - seg.n, memo);
+  });
+}
+
+/**
+ * Alle Züge mit der Sieben, je erreichbarem Endzustand einer (gleiche Endstellung = gleicher Zug).
+ * all=true: alle Endzustände (für die KI). all=false: ein Zug genügt – die Oberfläche prüft damit nur,
+ * ob die Karte spielbar ist, und fragt die Teilschritte dann mit sevenOptions ab.
+ */
+function gen7(ms: Board, p: number, all: boolean): { segs: Seg[] }[] {
+  const out: { segs: Seg[] }[] = [], seen = new Set<string>(), vis = new Set<string>(), segs: Seg[] = [];
+  const rec = (cur: Board, rem: number): boolean => { // true = abbrechen
     if (rem === 0) {
-      if (dedupe) { const k = stateKey(cur); if (seen.has(k)) return; seen.add(k); }
+      const k = stateKey(cur);
+      if (seen.has(k)) return false;
+      seen.add(k);
       out.push({ segs: segs.slice() });
-      return;
+      return !all;
     }
-    // Normal: eigene Farbe (bzw. Partner, sobald die eigenen alle im Ziel sind –
-    // so kann der Rest einer 7 schon für den Partner verwendet werden).
-    const cols = OPT.canadian && !allHome(cur, p) ? [p, (p + 2) % 4] : [ctrlColor(cur, p)];
-    for (const c of cols) for (let i = 0; i < 4; i++) {
-      const m = cur[c * 4 + i];
-      if (used.has(m.id) || m.loc === 'K') continue;
-      for (let s = 1; s <= rem; s++) for (const path of fwdPaths(cur, m, s)) {
-        const seg = mvSeg(m, path, s, true);
-        const nx = cloneMs(cur);
-        applySeg(nx, seg);
-        used.add(m.id); segs.push(seg);
-        rec(nx, rem - s);
-        segs.pop(); used.delete(m.id);
-      }
+    const vk = stateKey(cur) + '|' + rem;
+    if (vis.has(vk)) return false;
+    vis.add(vk);
+    for (const seg of sevenSteps(cur, p, rem)) {
+      const nx = cloneMs(cur);
+      applySeg(nx, seg);
+      segs.push(seg);
+      const stop = rec(nx, rem - seg.n);
+      segs.pop();
+      if (stop) return true;
     }
+    return false;
   };
   rec(ms, 7);
   return out;
@@ -356,18 +405,19 @@ export function threat(ms: Board, t: Marble, attTeam: number, fb: Set<number>): 
  * - A: Angriffschancen (dasselbe für gegnerische Murmeln)
  * - G: eigene Murmeln im Ziel, O: eigene Murmeln draussen, H: Gegner im Zwinger
  * - K: Blockaden (fest gewichtet): Partner im Nahbereich aufhalten kostet, Gegner aufhalten lohnt sich.
- * Die Gewichte W bestimmen den Spielstil; Grün kann sie von dir lernen (siehe app.ts).
+ * Die Gewichte W bestimmen den Spielstil (Standard W0); sie lassen sich zum Feinjustieren der Spielstärke ändern.
  */
-export interface Feats { M: number; R: number; A: number; G: number; O: number; H: number; K: number }
-export interface Weights { R: number; A: number; G: number; O: number; H: number; C: number }
+export interface Feats { M: number; R: number; A: number; G: number; O: number; H: number; K: number; Mo: number; Go: number }
+/** L (nur Stufe „Stark“): Anteil der Gegnerwerte, der bei deutlichem Vorsprung nicht mehr zählt (siehe isLead). */
+export interface Weights { R: number; A: number; G: number; O: number; H: number; C: number; L?: number }
 export const W0: Weights = { R: -0.55, A: 0.15, G: 0, O: 0, H: 0, C: -1 };
 
 export function feats(ms: Board, p: number): Feats {
-  const tm = teamOf(p), f: Feats = { M: 0, R: 0, A: 0, G: 0, O: 0, H: 0, K: 0 }, fb = freshSet(ms, null);
+  const tm = teamOf(p), f: Feats = { M: 0, R: 0, A: 0, G: 0, O: 0, H: 0, K: 0, Mo: 0, Go: 0 }, fb = freshSet(ms, null);
   for (const m of ms) {
     const v = mval(m), mine = teamOf(m.color) === tm;
     f.M += mine ? v : -v;
-    if (mine) { if (m.loc === 'G') f.G++; if (m.loc !== 'K') f.O++; } else if (m.loc === 'K') f.H++;
+    if (mine) { if (m.loc === 'G') f.G++; if (m.loc !== 'K') f.O++; } else { f.Mo += v; if (m.loc === 'G') f.Go++; if (m.loc === 'K') f.H++; }
     if (m.loc === 'T' && !m.fresh) {
       const th = threat(ms, m, mine ? 1 - tm : tm, fb);
       if (mine) f.R += v * th; else f.A += v * th;
@@ -383,7 +433,9 @@ export function feats(ms: Board, p: number): Feats {
       const d = (b.pos - x.pos + 64) % 64;
       if (d < 1 || d > 13) continue;
       if (!x.fresh && (startOf(x.color) - x.pos + 64) % 64 < d) continue; // biegt vorher in sein Ziel ab
-      if (teamOf(x.color) === tm) { if (d <= 6 && x.color !== b.color) f.K -= 45 - 1.5 * d; }
+      // Nur wenn die blockierende Murmel b UNSEREM Team gehört, halten WIR den Partner auf. (Früher fehlte diese Prüfung:
+      // dann zählte auch der frische Startstein eines Gegners vor unserer Murmel – und die KI fuhr mit der 4 rückwärts davon.)
+      if (teamOf(x.color) === tm) { if (d <= 6 && x.color !== b.color && teamOf(b.color) === tm) f.K -= 45 - 1.5 * d; }
       else f.K += 12 - 0.6 * d;
     }
   }
@@ -391,7 +443,18 @@ export function feats(ms: Board, p: number): Feats {
   if (teamWon(ms, 1 - tm)) f.M -= 10000;
   return f;
 }
-export const scoreF = (f: Feats, W: Weights) => f.M + W.R * f.R + W.A * f.A + W.G * f.G + W.O * f.O + W.H * f.H + f.K;
+/**
+ * Deutlicher Vorsprung: mindestens 6 eigene Murmeln im Ziel und mindestens 3 mehr als die Gegner (zum Beispiel 7 gegen 3).
+ * Dann geht es nur noch darum, die letzte Murmel schnell und sicher heimzubringen. Gegner heimzuschicken lohnt sich kaum noch.
+ */
+export const isLead = (goals: number, oppGoals: number) => goals >= 6 && goals - oppGoals >= 3;
+/** Abstimmung der Vorsprungs-Taktik (Stufe „Stark“): leadL = Anteil der Gegnerwerte, der im Vorsprung nicht mehr zählt. 0 = aus. */
+export const TUNE = { leadL: 0.65, trap: 1.5 };   // trap: Gewicht der Falle auf dem Startfeld (trapBonus), 0 = aus; 1 wäre der rechnerische Wert
+export const scoreF = (f: Feats, W: Weights) => {
+  const s = f.M + W.R * f.R + W.A * f.A + W.G * f.G + W.O * f.O + W.H * f.H + f.K;
+  // Im Vorsprung zählt der Weg der Gegner nur noch zu (1 − L): Ein Schlag bringt dann kaum mehr als der sichere Weg zum Sieg.
+  return W.L && isLead(f.G, f.Go) ? s + W.L * f.Mo - W.A * f.A : s;
+};
 /** Stellungsbewertung aus Sicht von Spieler p. Höher = besser. */
 export function evaluate(ms: Board, p: number, W: Weights = W0): number { return scoreF(feats(ms, p), W); }
 
@@ -431,6 +494,37 @@ export function partnerBackPen(ms: Board, p: number, segs: Seg[], lvl: Level): n
   return 0;
 }
 
+/**
+ * Taktik (von dir) für Grün und für Rot/Gelb auf „Stark“: mit den Murmeln des Partners nur fahren,
+ * wenn es einen triftigen Grund gibt. Ohne Not kostet jeder Teilschritt mit einer Partnermurmel
+ * (kanadische 7, Bube-Tausch mit dem Partner) Punkte. Lohnende Züge – Gegner schlagen, die Murmel
+ * retten, im Ziel aufrücken, lückenlos ins Ziel bringen – bleiben dadurch möglich, ein paar Felder
+ * Vorsprung nicht. Sind alle eigenen Murmeln im Ziel, muss man mit denen des Partners fahren: kein Abzug.
+ */
+const PARTNER_USE_PEN = 18;
+/** Partnermurmel ins Ziel ist ein triftiger Grund: lückenlos ins tiefste freie Loch – oder mit Lücke, wenn sie in Gefahr ist. */
+export function partnerGoalOk(src: Board, m: Marble, seg: MoveSeg, p: number): boolean {
+  const g = goalOcc(src, m.color);
+  let deep = 3;
+  for (let i = 0; i < 4; i++) if (g[i]) { deep = i - 1; break; }
+  return seg.end.pos >= deep || threat(src, m, 1 - teamOf(p), freshSet(src, m)) >= 0.3;
+}
+export function partnerUsePen(ms: Board, p: number, segs: Seg[], lvl: Level): number {
+  if ((p !== 2 && lvl !== 'hard') || allHome(ms, p)) return 0;
+  let pen = 0, cur: Board | null = null;
+  for (const seg of segs) {
+    const src = cur || ms;
+    if (seg.t === 'sw') { if (src[seg.o].color === (p + 2) % 4) pen += PARTNER_USE_PEN; }
+    else if (seg.t === 'mv') {
+      const m = src[seg.m];
+      // Aufrücken im Ziel des Partners und lückenloser Zieleinlauf sind immer triftige Gründe
+      if (m.color !== p && m.loc !== 'G' && !(seg.end.loc === 'G' && partnerGoalOk(src, m, seg, p))) pen += PARTNER_USE_PEN;
+    }
+    if (segs.length > 1) { if (!cur) cur = cloneMs(ms); applySeg(cur, seg); }
+  }
+  return pen;
+}
+
 /** „Kosten“, eine wertvolle Karte jetzt zu verbrauchen statt sie aufzuheben. */
 export function keepCost(card: Card, val: Value, ms: Board, p: number): number {
   if (card.r === 'JO') return 16;
@@ -444,21 +538,67 @@ export function keepCost(card: Card, val: Value, ms: Board, p: number): number {
   }
 }
 
+// ---------------------------------------------------------------- Falle auf dem Startfeld
+
+/** Wahrscheinlichkeit, dass ein Spieler mit k Karten keine einzige von m bestimmten Karten hält (110 Karten im Spiel). */
+const pNone = (m: number, k: number): number => { let q = 1; for (let i = 0; i < k; i++) q *= (110 - m - i) / (110 - i); return q; };
+
+/**
+ * Wahrscheinlichkeit, dass die Falle wirkt, wenn der Gegner k Karten hält.
+ * Ohne kanadische Sieben genügt irgendeine Startkarte (Ass, König, Joker: 22 Karten): Er muss herauskommen.
+ * Mit kanadischer Sieben kann er die Murmel seines Partners mit einer 7 oder einem Joker als 7 wegziehen (zusammen 14 Karten).
+ * Die Falle wirkt dann nur mit Ass oder König ohne 7 und ohne Joker (30 Karten ohne Ass, König, 7, Joker).
+ */
+export function pTrapWorks(k: number): number {
+  return OPT.canadian ? pNone(14, k) - pNone(30, k) : 1 - pNone(22, k);
+}
+
+/** Zusatzwissen für den Computer: Kartenzahl der Runde und was jeder Spieler jetzt noch auf der Hand hat. */
+export interface AiCtx { n: number; cnt: number[] }
+
+/**
+ * Falle auf dem Startfeld (von dir; nur Stufe „Stark“, alle Computerspieler, nur bei Runden mit 5 oder 6 Karten):
+ * Steht eine eigene Murmel auf dem Startfeld eines Gegners X, der nichts auf der Bahn hat, aber Murmeln im Zwinger, dann
+ * schickt X sie mit einer Startkarte heim. Mit dem Buben tauscht der Computer sie lieber gegen eine Murmel von X' Partner:
+ * Kommt X heraus (bei 5 oder 6 Karten sehr wahrscheinlich), schlägt er seine eigene Partnermurmel. Gibt den Wert dieser
+ * Aussicht (Wahrscheinlichkeit × Wert der Murmel) als Zuschlag auf den Tauschzug. X muss mindestens 4 Karten halten.
+ * Mit der kanadischen Sieben kann X die Murmel seines Partners wegziehen (7 oder Joker als 7); das steckt in pTrapWorks.
+ */
+export function trapBonus(ms: Board, p: number, mv: Move, ctx: AiCtx | null): number {
+  if (!ctx || TUNE.trap <= 0 || mv.val !== 'B' || mv.segs.length !== 1) return 0;
+  if (ctx.n !== 5 && ctx.n !== 6) return 0;
+  const sg = mv.segs[0];
+  if (sg.t !== 'sw') return 0;
+  const a = ms[sg.m], b = ms[sg.o], tm = teamOf(p);
+  if (a.loc !== 'T' || b.loc !== 'T') return 0;
+  for (const x of [0, 1, 2, 3]) {
+    if (teamOf(x) === tm || a.pos !== startOf(x)) continue;                       // a steht auf dem Start eines Gegners
+    if (b.color !== (x + 2) % 4) continue;                                           // b gehört dem Partner dieses Gegners
+    if (ms.some(m => m.color === x && m.loc === 'T') || kennelCount(ms, x) === 0) continue;   // x muss raus wollen und kann nichts anderes ziehen
+    const k = ctx.cnt[x];
+    if (k < 4) continue;
+    const pTrap = pTrapWorks(k);
+    const v = 22 + ((startOf(x) - startOf(b.color) + 64) % 64) * 1.1;                // so viel ist b wert, wenn es auf dem Start von x steht
+    return TUNE.trap * pTrap * v;
+  }
+  return 0;
+}
+
 /**
  * Wählt den Zug des Computers.
  * - Leicht: Bewertung + viel Zufall
  * - Mittel: Bewertung + wenig Zufall
  * - Stark: Bewertung + Blick auf die nächste eigene Karte (2-Zug-Planung)
- * W: Gewichte (Standard W0; für Grün ggf. die von dir gelernten).
+ * W: Gewichte (Standard W0; zum Feinjustieren der Spielstärke).
  */
-export function aiChoose(ms: Board, p: number, hand: Card[], level: Level, W: Weights | null = null): Move | null {
-  const w = W || W0;
+export function aiChoose(ms: Board, p: number, hand: Card[], level: Level, W: Weights | null = null, ctx: AiCtx | null = null): Move | null {
+  const w0 = W || W0, w: Weights = level === 'hard' && TUNE.leadL > 0 ? { ...w0, L: TUNE.leadL } : w0;   // Vorsprungs-Taktik nur auf „Stark“
   const moves = legalMoves(ms, p, hand, true);
   if (!moves.length) return null;
   const sc = moves.map(mv => {
     const r = applyAll(ms, mv.segs);
     const e = evaluate(r.ms, p, w);
-    return { mv, ms: r.ms, e, s: e + w.C * keepCost(mv.card, mv.val, ms, p) - partnerGoalPen(ms, p, mv.segs) - partnerBackPen(ms, p, mv.segs, level) };
+    return { mv, ms: r.ms, e, s: e + w.C * keepCost(mv.card, mv.val, ms, p) - partnerGoalPen(ms, p, mv.segs) - partnerBackPen(ms, p, mv.segs, level) - partnerUsePen(ms, p, mv.segs, level) + (level === 'hard' ? trapBonus(ms, p, mv, ctx) : 0) };
   });
   if (level === 'easy') for (const x of sc) x.s += Math.random() * 45;
   else if (level === 'medium') for (const x of sc) x.s += Math.random() * 5;
@@ -473,7 +613,7 @@ export function aiChoose(ms: Board, p: number, hand: Card[], level: Level, W: We
         best = -1e9;
         for (const y of m2) {
           const v = evaluate(applyAll(x.ms, y.segs).ms, p, w) + w.C * keepCost(y.card, y.val, x.ms, p)
-            - partnerGoalPen(x.ms, p, y.segs) - partnerBackPen(x.ms, p, y.segs, level);
+            - partnerGoalPen(x.ms, p, y.segs) - partnerBackPen(x.ms, p, y.segs, level) - partnerUsePen(x.ms, p, y.segs, level);
           if (v > best) best = v;
         }
       }
@@ -520,11 +660,42 @@ export function giveVal(c: Card, x: GiveCtx, G: GiveParams): number {
  *    oder Joker, bzw. eine 4, wenn er blockiert ist. Je mehr Karten diese Runde, desto eher auch teure Karten.
  * 3) Kann der Partner damit einen Gegner heimschicken, bekommt er die passende Karte (killGive).
  */
-export function ruleGive(ms: Board, p: number, hand: Card[]): Card | null {
+/** Ergebnis von endgameGive. skipStuck: die Regel „festgefahren: beste Karte geben“ (4/7 …) gilt hier nicht. */
+export interface EndgameGive { give: Card | null; keep: Set<number>; skipStuck: boolean }
+
+/**
+ * Taktik (von dir), nur Stufe „Stark“, für alle Computerspieler: Partner, bei denen schon einer alle Murmeln im Ziel hat.
+ * Dann zieht nur noch einer von beiden mit eigenen Murmeln, der Fertige fährt mit dessen Murmeln – und umgekehrt.
+ * Stecken diese Murmeln noch alle im Zwinger, kommt es auf die Reihenfolge an: Wer zuerst zieht, braucht eine Startkarte
+ * (Ass, König, Joker), sonst muss er seine ganze Hand ablegen.
+ * - Der Partner zieht zuerst: Er bekommt meine (billigste) Startkarte, falls ich eine habe. Habe ich keine, bin ich nicht
+ *   „festgefahren“ (ich fahre ja nach ihm mit seinen Murmeln): dann gebe ich die Karte, die ich am wenigsten brauche.
+ * - Ich ziehe zuerst: Ich behalte meine Startkarte (eine überzählige darf weg). Habe ich keine, ist meine Hand ohnehin
+ *   verloren und ich gebe die Karte mit den meisten Feldern.
+ * Alles andere (Murmeln schon draussen, beide noch nicht fertig) regeln die normalen Tauschregeln.
+ * first: Zieht der Gebende in dieser Runde vor seinem Partner?
+ */
+export function endgameGive(ms: Board, p: number, hand: Card[], first: boolean): EndgameGive | null {
+  const q = (p + 2) % 4, pDone = allHome(ms, p), qDone = allHome(ms, q);
+  if (pDone === qDone) return null;                                  // beide noch nicht fertig (oder Spiel vorbei)
+  const mobile = pDone ? q : p, m4 = [0, 1, 2, 3].map(i => ms[mobile * 4 + i]);
+  if (m4.some(m => m.loc === 'T') || !m4.some(m => m.loc === 'K')) return null; // nur „alles noch im Zwinger“
+  const starts = hand.filter(c => c.r === 'A' || c.r === 'K' || c.r === 'JO').sort((a, b) => GIVE0.B[a.r] - GIVE0.B[b.r]);
+  if (!first) return { give: starts[0] ?? null, keep: new Set(), skipStuck: true };
+  if (starts.length >= 2) return { give: starts[0], keep: new Set(starts.slice(1).map(c => c.id)), skipStuck: true };
+  if (starts.length === 1) return { give: null, keep: new Set([starts[0].id]), skipStuck: true };
+  for (const r of ['D', '10', '9', '8', '7', '6', '5', '3', '2', '4', 'B'] as Rank[]) {   // Hand ist verloren: die Karte mit den meisten Feldern retten
+    const c = hand.find(x => x.r === r);
+    if (c) return { give: c, keep: new Set(), skipStuck: true };
+  }
+  return null;
+}
+
+export function ruleGive(ms: Board, p: number, hand: Card[], skipStuck = false, noKill = false): Card | null {
   const partner = (p + 2) % 4, mc = ctrlColor(ms, p), pc = ctrlColor(ms, partner);
   const has = (r: Rank) => hand.find(c => c.r === r);
   const mine = hand.filter(c => !(OPT.canadian && c.r === '7'));
-  if (!legalMoves(ms, p, mine, true).length) {
+  if (!skipStuck && !legalMoves(ms, p, mine, true).length) {
     for (const r of (OPT.canadian ? [] : ['7' as Rank]).concat(['4', 'JO', 'A', 'K', 'D', 'B', '10', '9', '8', '6', '5', '3', '2'] as Rank[])) {
       const c = has(r);
       if (c) return c;
@@ -543,7 +714,7 @@ export function ruleGive(ms: Board, p: number, hand: Card[]): Card | null {
       for (const r of want) { const c = has(r); if (c && GIVE0.B[r] <= T) return c; }
     }
   }
-  return killGive(ms, p, hand);
+  return noKill ? null : killGive(ms, p, hand);   // im Vorsprung keine Schlag-Karte (siehe isLead)
 }
 
 /**
@@ -586,12 +757,43 @@ export function killGive(ms: Board, p: number, hand: Card[]): Card | null {
   return best;
 }
 
-/** Welche Karte gibt der Computer seinem Partner? useRules: deine festen Tauschregeln anwenden. */
-export function aiGive(ms: Board, p: number, hand: Card[], G: GiveParams | null = null, useRules = false): Card {
-  if (useRules) { const c = ruleGive(ms, p, hand); if (c) return c; }
+/**
+ * Regel 0 (gilt für alle Computerspieler): Siegkarte. Kann unser Team mit einer meiner Karten sofort gewinnen?
+ * - Zieht der Partner in dieser Runde vor mir und gewinnt mit der Karte, bekommt er sie.
+ * - Sonst behalte ich sie (je Kartenwert eine). Sonst muss ich vielleicht vorher eine andere Karte
+ *   ausspielen und fahre dabei die Murmel am Ziel vorbei (Zugzwang).
+ * first: Ziehe ich in dieser Runde vor meinem Partner?
+ */
+export function winGive(ms: Board, p: number, hand: Card[], first: boolean): { give: Card | null; keep: Set<number> } {
+  const t = teamOf(p), partner = (p + 2) % 4, keep = new Set<number>();
+  const wins = (q: number, c: Card) => legalMoves(ms, q, [c], true).some(mv => teamWon(applyAll(ms, mv.segs).ms, t));
+  if (!first) {
+    const g = hand.filter(c => wins(partner, c)).sort((a, b) => GIVE0.B[a.r] - GIVE0.B[b.r])[0];
+    if (g) return { give: g, keep };
+  }
+  const seen = new Set<Rank>();
+  for (const c of hand) if (!seen.has(c.r) && wins(p, c)) { seen.add(c.r); keep.add(c.id); }
+  return { give: null, keep };
+}
+
+/**
+ * Welche Karte gibt der Computer seinem Partner?
+ * Zuerst die Siegkarte (winGive), dann – mit useRules – deine festen Tauschregeln, sonst nach Kartenwert.
+ * first: Zieht der Gebende in dieser Runde vor seinem Partner? (wichtig für die Siegkarte)
+ */
+export function aiGive(ms: Board, p: number, hand: Card[], G: GiveParams | null = null, useRules = false, first = true, hard = false): Card {
+  const w = winGive(ms, p, hand, first);
+  if (w.give) return w.give;
+  const eg = hard ? endgameGive(ms, p, hand, first) : null;     // nur Stufe „Stark“
+  if (eg?.give) return eg.give;
+  const protect = new Set<number>([...w.keep, ...(eg ? eg.keep : [])]);
+  const pool = hand.filter(c => !protect.has(c.id)), h = pool.length ? pool : hand;
+  const goals = (t: number) => ms.filter(m => teamOf(m.color) === t && m.loc === 'G').length;
+  const lead = hard && TUNE.leadL > 0 && isLead(goals(teamOf(p)), goals(1 - teamOf(p)));
+  if (useRules) { const c = ruleGive(ms, p, hand, eg?.skipStuck, lead); if (c && h.includes(c)) return c; }
   const g = G || GIVE0, x = giveCtx(ms, p, hand);
-  let best = hand[0], bv = 1e9;
-  for (const c of hand) { const v = giveVal(c, x, g) + Math.random(); if (v < bv) { bv = v; best = c; } }
+  let best = h[0], bv = 1e9;
+  for (const c of h) { const v = giveVal(c, x, g) + Math.random(); if (v < bv) { bv = v; best = c; } }
   return best;
 }
 

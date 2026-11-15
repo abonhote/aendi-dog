@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ändi Dog – Soundlabor</title>
+<style>
+:root{--bg:#dfe7e2;--panel:#eef3f0;--ink:#16211c;--muted:#566a60;--line:#c3cfc8;--acc:#1f6f4f;--accInk:#fff;--sel:#2b5fd9;--selBg:#e3ecff;--ok:#1f6f4f;
+  color-scheme:light dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1915;--panel:#17241e;--ink:#e6efe9;--muted:#9db0a6;--line:#2b3c34;--acc:#3fcf86;--accInk:#08140e;--sel:#8fb0ff;--selBg:#1d2a45;--ok:#3fcf86}}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
+*,*::before,*::after{box-sizing:inherit}
+main{max-width:720px;margin:0 auto;padding:14px 14px 40px}
+h1{font-size:26px;margin:4px 0 4px;letter-spacing:-.3px}
+h2{font-size:19px;margin:0}
+p{margin:0}
+.muted{color:var(--muted);font-size:14px}
+.top{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;margin:10px 0 16px;display:grid;gap:10px}
+.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.cat{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;margin:0 0 14px}
+.cat header{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:2px}
+.vol{display:flex;flex-wrap:wrap;align-items:center;gap:2px 10px;font-size:13px;color:var(--muted);margin:10px 0 6px}
+.vol>span:first-child{flex:1 1 auto}
+.vol span[data-vl],.vol span[data-sl]{text-align:right;white-space:nowrap;font-weight:600;color:var(--ink)}
+.vol input[type=range]{order:3;flex:1 1 100%;min-width:0;margin:2px 0 0;height:30px}
+.vol input[type=text]{flex:1 1 60%;min-width:120px}
+.var{display:grid;grid-template-columns:1fr auto;gap:8px 10px;align-items:center;border:1.5px solid var(--line);border-radius:12px;padding:10px 10px 10px 12px;margin:8px 0;background:var(--bg);cursor:pointer}
+.var.on{border-color:var(--sel);background:var(--selBg)}
+.var label{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;cursor:pointer;min-width:0}
+.var input[type=radio]{grid-row:1/3;align-self:start;width:20px;height:20px;margin:2px 0 0;accent-color:var(--sel)}
+.vn{font-weight:700}
+.vn small{white-space:nowrap;font-weight:600;font-size:11px;background:var(--acc);color:var(--accInk);border-radius:999px;padding:1px 7px;margin-left:6px;vertical-align:1px}
+.vd{font-size:13.5px;color:var(--muted)}
+.btns{display:flex;gap:6px}
+button{font:inherit;font-weight:700;border:1.5px solid var(--line);background:var(--panel);color:var(--ink);border-radius:10px;min-width:48px;height:44px;padding:0 12px;cursor:pointer;touch-action:manipulation}
+button:active{transform:translateY(1px)}
+button.pri{background:var(--acc);color:var(--accInk);border-color:var(--acc)}
+button.wide{padding:0 16px}
+textarea{width:100%;min-height:215px;font:14px/1.5 ui-monospace,Menlo,Consolas,monospace;background:var(--bg);color:var(--ink);border:1.5px solid var(--line);border-radius:12px;padding:10px;resize:vertical}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:999px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<main>
+  <h1>Soundlabor</h1>
+  <p class="muted">Töne für Ändi Dog. Tippe auf ▶ zum Anhören und wähle je Ton deinen Favoriten. Unten steht deine Auswahl zum Kopieren – schick sie mir einfach zurück.</p>
+  <section class="top" aria-label="Allgemein">
+    <div class="row"><label for="master"><b>Gesamtlautstärke</b></label><input id="master" type="range" min="0" max="1" step="0.05" value="0.8" style="flex:1;min-width:120px"></div>
+    <div class="row"><button class="pri wide" id="playAll">▶ Meine Auswahl nacheinander</button><button class="wide" id="stopAll">Stopp</button></div>
+    <p class="muted">Der Ton startet nach dem ersten Tippen. Handy nicht auf lautlos, Lautstärke hoch. „im Spiel“ markiert, was jetzt im Spiel steckt. ▶▶ spielt den Ablauf wie im Spiel (zum Beispiel mehrere Karten hintereinander). Der Regler „Geschwindigkeit“ macht einen Ton kürzer und schneller (bis ×2) oder länger und langsamer (bis ×0,5), die Tonhöhe bleibt.</p>
+  </section>
+  <div id="cats"></div>
+  <section class="cat" aria-label="Meine Auswahl">
+    <header><h2>Meine Auswahl</h2></header>
+    <p class="muted" style="margin-bottom:8px">Diesen Text kopieren und mir senden. Die Anmerkung pro Ton (zum Beispiel „etwas leiser“) kommt mit.</p>
+    <textarea id="summary" readonly aria-label="Auswahl"></textarea>
+    <div class="row" style="margin-top:10px"><button class="pri wide" id="copy">Kopieren</button><button class="wide" id="reset">Alles zurücksetzen</button></div>
+  </section>
+</main>
+<div class="toast" id="toast" role="status"></div>
+<script>
+// ===================== Tonerzeugung (Web Audio, ohne Tondateien) =====================
+const rnd=()=>Math.random();
+const GAINS={"mischenA":0.9,"mischenB":0.78,"mischenC":1.21,"mischenD":2.23,"mischenE":0.92,"austeilenA":0.38,"austeilenB":0.35,"austeilenC":0.93,"austeilenD":0.58,"austeilenE":0.53,"austeilenF":0.57,"tauschenA":0.34,"tauschenB":0.36,"tauschenC":0.4,"tauschenD":0.36,"tauschenE":0.34,"ablegenA":0.38,"ablegenB":0.58,"ablegenC":0.61,"ablegenD":0.65,"ablegenE":0.47,"hinstellenA":0.38,"hinstellenB":0.5,"hinstellenC":0.35,"hinstellenD":0.38,"hinstellenE":0.79,"ziehenA":0.28,"ziehenB":0.62,"ziehenC":0.86,"ziehenD":0.57,"ziehenE":0.41,"heimschickenA":0.36,"heimschickenB":0.38,"heimschickenC":0.39,"heimschickenD":0.38,"heimschickenE":0.33,"mischenF":1.21};
+function makeNoise(c){const b=c.createBuffer(1,c.sampleRate,c.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;return b}
+function makeChain(c,vol){const comp=c.createDynamicsCompressor(),g=c.createGain();g.gain.value=vol;comp.threshold.value=-12;comp.knee.value=12;comp.ratio.value=5;comp.attack.value=.002;comp.release.value=.12;comp.connect(g);g.connect(c.destination);return {input:comp,master:g}}
+// Bausteine, an einen Kontext und einen Ausgang gebunden
+function mk(c,out,noise){
+  const nz=(t,o)=>{const s=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();
+    s.buffer=noise;f.type=o.type||'bandpass';f.frequency.setValueAtTime(o.f,t);if(o.to)f.frequency.exponentialRampToValueAtTime(o.to,t+o.dur);f.Q.value=o.q||1;
+    const a=Math.min(o.att||.003,o.dur*.6);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(Math.max(.0002,o.v),t+a);g.gain.exponentialRampToValueAtTime(.0001,t+o.dur);
+    s.connect(f);f.connect(g);g.connect(out);s.start(t,rnd()*.5,o.dur+.03)};
+  const tone=(t,o)=>{const os=c.createOscillator(),g=c.createGain();
+    os.type=o.type||'sine';os.frequency.setValueAtTime(o.f,t);if(o.to)os.frequency.exponentialRampToValueAtTime(o.to,t+o.dur);
+    g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(Math.max(.0002,o.v),t+.002);g.gain.exponentialRampToValueAtTime(.0001,t+o.dur);
+    os.connect(g);g.connect(out);os.start(t);os.stop(t+o.dur+.02)};
+  return {nz,tone};
+}
+// wiederverwendete Klänge
+const riffle=(P,t,span,N,o={})=>{for(let i=0;i<N;i++){const u=i/N;P.nz(t+span*u+rnd()*.004,{f:(o.f0||2200)+rnd()*(o.fs||3200),q:o.q||.8,dur:(o.d||.03)+rnd()*(o.ds||.02),v:(.04+.11*Math.sin(Math.PI*Math.min(1,u+.1)))*(o.v||1.8)})}};
+const knock=(P,t,v)=>{P.tone(t,{f:190,to:95,dur:.09,v:.26*v});P.nz(t,{f:900,type:'lowpass',q:.7,dur:.07,v:.22*v})};
+const pat=(P,t,m)=>{const r=.93+.14*rnd();P.tone(t,{f:250*r,to:170*r,dur:.04,v:.3*m});P.nz(t,{f:1500*r,q:1.6,dur:.016,v:.45*m})};
+const tock=(P,t,k,m)=>{const r=.95+.1*rnd();P.tone(t,{f:230*k*r,to:150*k*r,dur:.09,v:.55*m});P.tone(t,{f:640*k*r,to:430*k*r,dur:.05,v:.26*m});P.nz(t,{f:1500*k,q:2.5,dur:.014,v:.55*m});P.nz(t,{f:3500,type:'highpass',q:.7,dur:.006,v:.12*m})};
+const deal0=(P,t)=>{const r=.9+.2*rnd();P.nz(t,{f:4600*r,to:1700*r,q:.9,dur:.075,v:1.8});P.nz(t+.05,{f:2600,type:'highpass',dur:.02,v:.45})};
+const r1=()=>.92+.16*rnd();
+
+// ===================== Töne und Varianten =====================
+// fn(P, t, o): P = Bausteine, t = Startzeit in Sekunden, o = {i,n,last}
+const CATS=[
+ {id:'mischen',title:'Mischen',hint:'Wenn eine Runde mit neu gemischtem Stapel beginnt (eine bis anderthalb Sekunden).',dur:1.7,
+  single:true,cur:'F',variants:[
+  {k:'A',name:'Riffeln',desc:'Zwei Stapel werden ineinandergeschoben, am Ende zweimal auf den Tisch geklopft.',fn:(P,t)=>{riffle(P,t+.03,.38,23);riffle(P,t+.53,.38,23);knock(P,t+.96,.8);knock(P,t+1.02,.8)}},
+  {k:'B',name:'Riffeln mit Brücke',desc:'Zweimal riffeln, dann das schnelle Abschnurren der Brücke, zum Schluss leise Klopfer.',fn:(P,t)=>{riffle(P,t,.35,20);riffle(P,t+.42,.35,20);for(let i=0;i<36;i++){const u=i/36;P.nz(t+.85+.3*(1-(1-u)*(1-u)),{f:1500+2800*u,q:1,dur:.025,v:.3+.35*u})}knock(P,t+1.24,.5);knock(P,t+1.31,.5)}},
+  {k:'C',name:'Abheben und mischen',desc:'Drei Päckchen, die nacheinander durch die Finger rutschen, mit kurzen Pausen.',fn:(P,t)=>{for(let g=0;g<3;g++)for(let i=0;i<6;i++)P.nz(t+g*.3+i*.026+rnd()*.004,{f:1800+rnd()*2400,q:1,dur:.035,v:.26});knock(P,t+.95,.6)}},
+  {k:'D',name:'Weich (Papier)',desc:'Tiefer und ruhiger, weniger Knistern, nur ein leises Klopfen am Ende.',fn:(P,t)=>{riffle(P,t,.95,30,{f0:1100,fs:1500,q:.6,d:.05,ds:.03,v:1.1});knock(P,t+1.05,.35)}},
+  {k:'E',name:'Fächern',desc:'Ein langes Streichen über die Kanten nach oben, dann wieder zusammen, ein Klopfer.',fn:(P,t)=>{P.nz(t,{f:900,to:4200,q:.7,dur:.45,v:.5,att:.15});P.nz(t+.5,{f:4200,to:1200,q:.7,dur:.35,v:.45,att:.1});knock(P,t+.88,.5)}},
+  {k:'F',name:'Abheben, langsamer',tag:1,desc:'Wie C, aber mit grösseren Abständen und Pausen: rund anderthalb Sekunden. Das ist die Fassung im Spiel, dort mit Lautstärke ×1,6 und Geschwindigkeit ×0,40.',fn:(P,t)=>{for(let g=0;g<3;g++)for(let i=0;i<6;i++)P.nz(t+g*.46+i*.04+rnd()*.005,{f:1800+rnd()*2400,q:1,dur:.035,v:.26});knock(P,t+1.42,.6)}}
+ ]},
+ {id:'austeilen',title:'Austeilen',hint:'Jede ausgeteilte Karte fliegt vom Stapel zu ihrem Platz (acht Karten kurz hintereinander).',dur:.9,
+  demo:(one,t)=>{for(let i=0;i<8;i++)one(t+i*.07,{})},cur:'D',variants:[
+  {k:'A',name:'Schwirren',desc:'Das helle Schwirren beim Losfliegen, ohne Landeton. So war es vorher.',fn:(P,t)=>deal0(P,t)},
+  {k:'B',name:'Schwirren und Tippen',desc:'Etwas tieferes Schwirren, dazu ein leises Tippen, wenn die Karte ankommt.',fn:(P,t)=>{const r=r1();P.nz(t,{f:2500*r,to:750*r,q:.9,dur:.09,v:1.7});pat(P,t+.11,2.3)}},
+  {k:'C',name:'Schnipp',desc:'Kurz und knackig wie ein Schnippen der Karte.',fn:(P,t)=>{const r=r1();P.nz(t,{f:3200*r,q:2.2,dur:.03,v:1.2});P.nz(t,{f:1200,q:1.5,dur:.02,v:.5});P.tone(t,{f:900*r,to:600*r,dur:.02,v:.12})}},
+  {k:'D',name:'Rutschen',tag:1,desc:'Tieferes, längeres Gleiten über den Tisch.',fn:(P,t)=>{const r=r1();P.nz(t,{f:1900*r,to:650*r,q:.8,dur:.12,v:.9,att:.02})}},
+  {k:'E',name:'Holz-Tick',desc:'Kein Schwirren, nur ein trockenes Tippen wie von einer Karte auf Holz.',fn:(P,t)=>{const r=r1();P.tone(t,{f:310*r,to:210*r,dur:.04,v:.45});P.nz(t,{f:1600*r,q:2.5,dur:.012,v:.6})}},
+  {k:'F',name:'Wuup',desc:'Schnell hoch und wieder runter, wie ein kurzer Wurf.',fn:(P,t)=>{const r=r1();P.nz(t,{f:1200*r,to:3800*r,q:1,dur:.04,v:.8});P.nz(t+.04,{f:3800*r,to:1500*r,q:1,dur:.07,v:.8})}}
+ ]},
+ {id:'tauschen',title:'Karte tauschen',hint:'Beim Kartentausch fliegen vier Karten (deine, die des Partners, zwei der Gegner), jede mit einem Start- und einem Landeton.',dur:1,
+  demo:(one,t)=>{[0,.07,.14,.21].forEach(d=>one(t+d,{}))},cur:'C',variants:[
+  {k:'A',name:'Schwirren und Tippen',desc:'Schwirren beim Losfliegen, leises Tippen beim Ankommen.',fn:(P,t)=>{const r=r1();P.nz(t,{f:2500*r,to:750*r,q:.9,dur:.09,v:1.7});pat(P,t+.33,2.3)}},
+  {k:'B',name:'Nur Schwirren',desc:'Wie das Austeilen früher: nur das helle Schwirren am Start.',fn:(P,t)=>deal0(P,t)},
+  {k:'C',name:'Schieben',tag:1,desc:'Ein längeres, weiches Gleiten über den Tisch, dann ein Tippen.',fn:(P,t)=>{const r=r1();P.nz(t,{f:1500*r,to:900*r,q:.8,dur:.28,v:.8,att:.09});pat(P,t+.3,1.6)}},
+  {k:'D',name:'Zuwerfen',desc:'Ein Luftzug, der hoch und wieder runter geht, dann das Tippen.',fn:(P,t)=>{P.nz(t,{f:900,to:3800,q:1,dur:.1,v:.9,att:.04});P.nz(t+.1,{f:3800,to:1100,q:1,dur:.18,v:.8,att:.02});pat(P,t+.32,2)}},
+  {k:'E',name:'Tick und Tock',desc:'Ein leises Tick beim Wegnehmen, ein Tock beim Hinlegen. Kein Schwirren.',fn:(P,t)=>{const r=r1();P.tone(t,{f:340*r,to:250,dur:.035,v:.3});P.nz(t,{f:1700,q:2.5,dur:.01,v:.35});P.tone(t+.33,{f:250*r,to:160*r,dur:.06,v:.5});P.nz(t+.33,{f:1400,q:2,dur:.014,v:.55})}}
+ ]},
+ {id:'ablegen',title:'Karte ablegen',hint:'Eine gespielte Karte landet auf dem Ablagestapel. ▶▶ spielt eine Karte, noch eine, dann drei beim Aussetzen.',dur:2.3,
+  demo:(one,t)=>{one(t,{});one(t+.9,{});[0,.09,.18].forEach(d=>one(t+1.8+d,{}))},cur:'D',variants:[
+  {k:'A',name:'Klatsch',desc:'Dumpfer Aufschlag mit etwas Papier.',fn:(P,t)=>{const r=.94+.12*rnd();P.tone(t,{f:170*r,to:100*r,dur:.07,v:1});P.nz(t,{f:1300*r,q:.9,dur:.035,v:1.7});P.nz(t,{f:3000,type:'highpass',q:.7,dur:.012,v:.29})}},
+  {k:'B',name:'Weiches Tippen',desc:'Leiser und runder, wie auf Filz.',fn:(P,t)=>{const r=r1();P.tone(t,{f:200*r,to:140*r,dur:.05,v:.5});P.nz(t,{f:900*r,q:1,dur:.022,v:.4})}},
+  {k:'C',name:'Holz-Klack',desc:'Heller, harter Schlag wie eine Karte auf einem Holztisch.',fn:(P,t)=>{const r=r1();P.tone(t,{f:180*r,to:120*r,dur:.06,v:.3});P.tone(t,{f:520*r,to:420*r,dur:.05,v:.35});P.tone(t,{f:1040*r,to:800*r,dur:.03,v:.18});P.nz(t,{f:1800,q:3,dur:.01,v:.6})}},
+  {k:'D',name:'Papier',tag:1,desc:'Ein kurzes Rascheln, dann das Tippen.',fn:(P,t)=>{P.nz(t,{f:2400,to:900,q:.8,dur:.09,v:.6,att:.02});pat(P,t+.08,1.2)}},
+  {k:'E',name:'Doppel-Tipp',desc:'Die Karte prallt kurz zurück: ein Tippen und gleich ein kleineres hinterher.',fn:(P,t)=>{pat(P,t,2.3);pat(P,t+.07,1.2)}}
+ ]},
+ {id:'hinstellen',title:'Murmel hinstellen',hint:'Wenn eine Murmel auf das Brett gestellt wird. Ein Klopfen auf Holz.',dur:.9,
+  demo:(one,t)=>{one(t,{});one(t+.8,{})},single:true,cur:'C',variants:[
+  {k:'A',name:'Holz-Tock',desc:'Dumpfer Körperton mit Holzblock-Oberton und kurzem Anschlag.',fn:(P,t)=>tock(P,t,1,1.6)},
+  {k:'B',name:'Holzblock hell',desc:'Höher und heller, wie ein Holzblock.',fn:(P,t)=>{const r=r1();P.tone(t,{f:420*r,to:330*r,dur:.07,v:.5});P.tone(t,{f:1000*r,to:800*r,dur:.04,v:.3});P.nz(t,{f:2300,q:3,dur:.01,v:.5})}},
+  {k:'C',name:'Tief klopfen',tag:1,desc:'Wie mit dem Knöchel auf den Tisch: tief und gedämpft.',fn:(P,t)=>{const r=r1();P.tone(t,{f:165*r,to:110*r,dur:.12,v:.7});P.tone(t,{f:430*r,to:300*r,dur:.06,v:.2});P.nz(t,{f:850,q:1.5,dur:.02,v:.5})}},
+  {k:'D',name:'Tock-tock',desc:'Das Tock und ein kleiner Nachhüpfer.',fn:(P,t)=>{tock(P,t,1,1.6);tock(P,t+.09,1.12,.55)}},
+  {k:'E',name:'Klack',desc:'Kurz und hart, fast wie Kunststoff auf Holz.',fn:(P,t)=>{const r=r1();P.tone(t,{f:950*r,to:650*r,dur:.035,v:.35});P.nz(t,{f:2600,q:4,dur:.008,v:.7});P.tone(t,{f:210,to:150,dur:.05,v:.25})}}
+ ]},
+ {id:'ziehen',title:'Murmel ziehen',hint:'Ein Ton je Feld, das letzte Feld etwas kräftiger. ▶ spielt das letzte Feld, ▶▶ fünf Felder hintereinander.',dur:1,
+  demo:(one,t)=>{for(let i=0;i<5;i++)one(t+i*.12,{i,n:5,last:i===4})},cur:'E',variants:[
+  {k:'A',name:'Leichtes Klopfen',desc:'Ein leichtes Holzklopfen pro Feld.',fn:(P,t,o)=>{const k=o.last?1:1.3,r=r1();P.tone(t,{f:230*k*r,to:150*k*r,dur:o.last?.07:.045,v:(o.last?.36:.2)*2.5});P.tone(t,{f:640*k*r,to:430*k*r,dur:o.last?.04:.025,v:(o.last?.16:.09)*2.5});P.nz(t,{f:1700*r,q:2.5,dur:.011,v:(o.last?.4:.3)*2.5})}},
+  {k:'B',name:'Hell tickend',desc:'Hohes, kurzes Ticken je Feld, das letzte tiefer.',fn:(P,t,o)=>{const r=r1();if(o.last){P.tone(t,{f:340*r,to:230*r,dur:.06,v:.5});P.nz(t,{f:1800,q:3,dur:.01,v:.7})}else{P.tone(t,{f:520*r,to:380*r,dur:.03,v:.3});P.nz(t,{f:2400*r,q:3,dur:.008,v:.5})}}},
+  {k:'C',name:'Rollen',desc:'Ein weiches Rollen über die Felder, am Ende ein Tock.',fn:(P,t,o)=>{if(o.last){tock(P,t,1,.42)}else{P.nz(t,{f:700*r1(),type:'lowpass',q:.7,dur:.09,v:.55,att:.03})}}},
+  {k:'D',name:'Tonleiter',desc:'Jedes Feld klingt etwas höher als das vorige, wie auf einem Xylophon. Das letzte tief.',fn:(P,t,o)=>{if(o.last){tock(P,t,1,.7)}else{const f=420*Math.pow(2,(o.i||0)*2/12);P.tone(t,{f,to:f*.8,dur:.04,v:.28});P.nz(t,{f:f*4,q:3,dur:.008,v:.4})}}},
+  {k:'E',name:'Weiches Tippen',tag:1,desc:'Tief und leise, wie Finger auf Filz.',fn:(P,t,o)=>{const r=r1();P.tone(t,{f:(o.last?170:190)*r,to:(o.last?110:140)*r,dur:o.last?.07:.05,v:o.last?.55:.35});P.nz(t,{f:800*r,q:1,dur:.015,v:o.last?.4:.25})}}
+ ]},
+ {id:'heimschicken',title:'Murmel heimschicken',hint:'Wenn eine Murmel geschlagen wird und zurück in den Zwinger muss.',dur:1,
+  single:true,cur:'D',variants:[
+  {k:'A',name:'Dunkles Tock',desc:'Das Holz-Tock, aber dunkler.',fn:(P,t)=>tock(P,t,.8,1.6)},
+  {k:'B',name:'Doppelschlag',desc:'Ein Schlag, dann ein hohler Nachschlag, wie in einen Kasten.',fn:(P,t)=>{tock(P,t,.9,1.5);tock(P,t+.12,.7,.9)}},
+  {k:'C',name:'Rollen und Klack',desc:'Die Murmel kullert davon und klackt in den Zwinger.',fn:(P,t)=>{P.nz(t,{f:800,to:300,type:'lowpass',q:.7,dur:.25,v:.6,att:.06});tock(P,t+.26,.8,1.4)}},
+  {k:'D',name:'Fallen',tag:1,desc:'Ein Ton, der nach unten fällt, dann der Aufschlag.',fn:(P,t)=>{P.tone(t,{f:520,to:110,dur:.17,v:.4});tock(P,t+.15,.75,1.5)}},
+  {k:'E',name:'Klackern',desc:'Mehrere Murmeln klackern aneinander, dann der Aufschlag.',fn:(P,t)=>{for(let j=0;j<4;j++){P.tone(t+j*.035,{f:1900+rnd()*600,dur:.05,v:.18});P.nz(t+j*.035,{f:3000,q:4,dur:.006,v:.3})}tock(P,t+.16,.8,1.4)}}
+ ]}
+];
+
+// ===================== Wiedergabe =====================
+const AC=window.AudioContext||window.webkitAudioContext;
+let ctx=null,chain=null,noiseBuf=null,stopTimers=[];
+// Voreinstellung für neue Besucher = die Werte, die jetzt im Spiel gelten
+const state={master:.8,sel:{},vol:{mischen:1.6},spd:{mischen:.4,austeilen:1.8,ziehen:1.32},note:{}};
+const KEY='aendi-dog-soundlabor';
+function ensure(){
+  if(!AC)return null;
+  if(!ctx){ctx=new AC();chain=makeChain(ctx,state.master);noiseBuf=makeNoise(ctx)}
+  if(ctx.state!=='running')ctx.resume();
+  return ctx;
+}
+function variantOf(cat,k){return cat.variants.find(v=>v.k===k)}
+// Schedule: spielt Variante v der Kategorie cat zur Zeit t; mode 'one' oder 'demo'
+// Geschwindigkeit s (1 = normal, 2 = doppelt so schnell): Alle Zeitabstände und Dauern eines Klangs werden durch s geteilt,
+// ebenso die Abstände im Ablauf (zum Beispiel zwischen den Karten). Die Tonhöhe bleibt.
+function scaled(P,t0,s){
+  if(s===1)return P;
+  const T=tt=>t0+(tt-t0)/s;
+  return {nz:(tt,o)=>P.nz(T(tt),{...o,dur:o.dur/s,att:o.att?o.att/s:undefined}),tone:(tt,o)=>P.tone(T(tt),{...o,dur:o.dur/s})};
+}
+function schedule(c,out,noise,cat,v,t,mode){
+  const g=c.createGain();g.gain.value=(GAINS[cat.id+v.k]||1)*(state.vol[cat.id]||1);g.connect(out);
+  const P=mk(c,g,noise),s=state.spd[cat.id]||1;
+  const one=(tt,o)=>{const t1=t+(tt-t)/s;v.fn(scaled(P,t1,s),t1,o||{})};
+  if(mode==='demo'&&cat.demo)cat.demo(one,t);else one(t,{last:true,i:0,n:1});
+}
+function play(cat,k,mode){
+  const c=ensure();if(!c)return;
+  schedule(c,chain.input,noiseBuf,cat,variantOf(cat,k),c.currentTime+.04,mode);
+}
+function playMine(){
+  const c=ensure();if(!c)return;let t=c.currentTime+.1;
+  const order=[['mischen',1.7,'one'],['austeilen',1.1,'demo'],['tauschen',1.2,'demo'],['ablegen',1.3,'one'],['hinstellen',.9,'one'],['ziehen',1.3,'demo'],['heimschicken',.5,'one']];
+  for(const [id,len,mode] of order){const cat=CATS.find(x=>x.id===id);schedule(c,chain.input,noiseBuf,cat,variantOf(cat,state.sel[id]),t,mode);t+=len/(state.spd[id]||1)}
+}
+function stopAll(){if(ctx){try{ctx.close()}catch(e){}ctx=null;chain=null;noiseBuf=null}}
+
+// Offline-Rendern (für das Angleichen der Lautstärken und zum Prüfen)
+async function renderOffline(cat,v,mode,withGain=true){
+  const sr=44100,oc=new OfflineAudioContext(1,Math.round(sr*cat.dur/Math.min(1,state.spd[cat.id]||1)),sr),ch=makeChain(oc,1),nb=makeNoise(oc);
+  const saved=state.vol[cat.id];state.vol[cat.id]=1;const sg=GAINS[cat.id+v.k];if(!withGain)GAINS[cat.id+v.k]=1;
+  schedule(oc,ch.input,nb,cat,v,.05,mode);
+  const r=await oc.startRendering();state.vol[cat.id]=saved;if(!withGain)GAINS[cat.id+v.k]=sg;
+  return r.getChannelData(0);
+}
+
+// ===================== Oberfläche =====================
+const $=id=>document.getElementById(id);
+function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(s&&typeof s==='object'){Object.assign(state.sel,s.sel||{});Object.assign(state.vol,s.vol||{});Object.assign(state.spd,s.spd||{});Object.assign(state.note,s.note||{});if(typeof s.master==='number')state.master=s.master}}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({sel:state.sel,vol:state.vol,spd:state.spd,note:state.note,master:state.master}))}catch(e){}}
+function toast(t){const e=$('toast');e.textContent=t;e.classList.add('show');clearTimeout(toast.h);toast.h=setTimeout(()=>e.classList.remove('show'),1600)}
+function summary(){
+  const lines=['Soundauswahl Ändi Dog',''];
+  for(const cat of CATS){
+    const v=variantOf(cat,state.sel[cat.id]),vol=state.vol[cat.id]||1;
+    let l=`${cat.title}: ${v.k} – ${v.name}`;if(Math.abs(vol-1)>.04)l+=` (Lautstärke ×${vol.toFixed(1).replace('.',',')})`;
+    const sp=state.spd[cat.id]||1;if(Math.abs(sp-1)>.04)l+=` (Geschwindigkeit ×${sp.toFixed(2).replace('.',',')})`;
+    const n=(state.note[cat.id]||'').trim();if(n)l+=` | ${n}`;lines.push(l);
+  }
+  return lines.join('\n');
+}
+function refresh(){$('summary').value=summary();for(const cat of CATS)for(const v of cat.variants){const row=document.getElementById('row-'+cat.id+v.k);if(row)row.classList.toggle('on',state.sel[cat.id]===v.k)}}
+// Anzeige der Geschwindigkeit: ×0,5 (halb so schnell) bis ×2 (doppelt so schnell)
+function spdLabel(s){return '×'+s.toFixed(2).replace('.',',')+(s<.96?' langsamer':s>1.04?' schneller':' normal')}
+function build(){
+  const box=$('cats');box.innerHTML='';
+  for(const cat of CATS){
+    if(!state.sel[cat.id]||!variantOf(cat,state.sel[cat.id]))state.sel[cat.id]=cat.cur;
+    const sec=document.createElement('section');sec.className='cat';sec.setAttribute('aria-label',cat.title);
+    sec.innerHTML=`<header><h2>${cat.title}</h2></header><p class="muted">${cat.hint}</p>
+      <div class="vol"><span>Lautstärke dieses Tons</span><input type="range" min="0.5" max="1.8" step="0.1" value="${state.vol[cat.id]||1}" data-vol="${cat.id}" aria-label="Lautstärke ${cat.title}"><span data-vl="${cat.id}">×${(state.vol[cat.id]||1).toFixed(1).replace('.',',')}</span></div>
+      <div class="vol"><span>Geschwindigkeit dieses Tons</span><input type="range" min="-1" max="1" step="0.05" value="${Math.log2(state.spd[cat.id]||1).toFixed(2)}" data-spd="${cat.id}" aria-label="Geschwindigkeit ${cat.title}"><span data-sl="${cat.id}">${spdLabel(state.spd[cat.id]||1)}</span></div>`;
+    for(const v of cat.variants){
+      const row=document.createElement('div');row.className='var';row.id='row-'+cat.id+v.k;
+      row.innerHTML=`<label><input type="radio" name="r-${cat.id}" value="${v.k}" ${state.sel[cat.id]===v.k?'checked':''}><span class="vn">${v.k} · ${v.name}${v.tag?'<small>im Spiel</small>':''}</span><span class="vd">${v.desc}</span></label>
+        <span class="btns"><button type="button" data-p="${cat.id}|${v.k}|one" aria-label="${cat.title} ${v.k} anhören">▶</button>${cat.single?'':`<button type="button" data-p="${cat.id}|${v.k}|demo" aria-label="${cat.title} ${v.k} wie im Spiel anhören">▶▶</button>`}</span>`;
+      sec.appendChild(row);
+    }
+    const nr=document.createElement('div');nr.className='vol';nr.innerHTML=`<span>Anmerkung</span><input type="text" data-note="${cat.id}" value="${(state.note[cat.id]||'').replace(/"/g,'&quot;')}" placeholder="zum Beispiel: etwas leiser, etwas tiefer" style="flex:1;min-width:120px;font:inherit;padding:8px 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink)" aria-label="Anmerkung ${cat.title}">`;
+    sec.appendChild(nr);box.appendChild(sec);
+  }
+  refresh();
+}
+document.addEventListener('click',e=>{
+  const b=e.target.closest('button[data-p]');
+  if(b){const [id,k,mode]=b.dataset.p.split('|');play(CATS.find(c=>c.id===id),k,mode);return}
+});
+document.addEventListener('change',e=>{
+  const r=e.target;
+  if(r.matches('input[type=radio]')){const id=r.name.slice(2);state.sel[id]=r.value;save();refresh()}
+  else if(r.matches('input[data-vol]'))return;
+});
+document.addEventListener('input',e=>{
+  const r=e.target;
+  if(r.matches('input[data-vol]')){state.vol[r.dataset.vol]=+r.value;document.querySelector(`[data-vl="${r.dataset.vol}"]`).textContent='×'+(+r.value).toFixed(1).replace('.',',');save();refresh()}
+  else if(r.matches('input[data-spd]')){let e=+r.value;if(Math.abs(e)<.06){e=0;r.value='0'}const sp=Math.pow(2,e);state.spd[r.dataset.spd]=sp;document.querySelector(`[data-sl="${r.dataset.spd}"]`).textContent=spdLabel(sp);save();refresh()}
+  else if(r.matches('input[data-note]')){state.note[r.dataset.note]=r.value;save();refresh()}
+  else if(r.id==='master'){state.master=+r.value;if(chain)chain.master.gain.value=state.master;save()}
+});
+// Zeilen antippen wählt (ausser auf Knöpfen)
+document.addEventListener('click',e=>{const row=e.target.closest('.var');if(row&&!e.target.closest('button')&&!e.target.closest('label')){const rd=row.querySelector('input[type=radio]');if(rd&&!rd.checked){rd.checked=true;rd.dispatchEvent(new Event('change',{bubbles:true}))}}});
+$('playAll').onclick=playMine;
+$('stopAll').onclick=()=>{stopAll();toast('Gestoppt')};
+$('copy').onclick=async()=>{const t=$('summary').value;try{await navigator.clipboard.writeText(t);toast('Kopiert')}catch(e){$('summary').select();document.execCommand&&document.execCommand('copy');toast('Markiert – bitte kopieren')}};
+$('reset').onclick=()=>{state.sel={};state.vol={};state.spd={};state.note={};save();build();toast('Zurückgesetzt')};
+load();$('master').value=state.master;build();
+window.__lab={CATS,GAINS,renderOffline,variantOf,state};
+</script>
+</body>
+</html>
