@@ -2,6 +2,11 @@
 
 Versionen nach [Semantic Versioning](https://semver.org/lang/de/): `0.0.x` = Entwicklungsstand vor der ersten Veröffentlichung.
 
+## 0.2.16
+
+- **Fehler behoben:** Nach dem Kartentausch blieb das Spiel stehen, die Handkarten liessen sich nicht mehr antippen. Die Zählung der „Fehlstarts“ rief eine nicht vorhandene Funktion (`hasMove`) auf.
+- **Android:** Ausgerichtet auf API-Ebene 36 (Vorgabe von Google Play). `versionName` und `versionCode` kommen jetzt aus `package.json`.
+
 ## 0.2.15
 
 - **Einstellungen: „Zurücksetzen“** setzt jetzt alles auf die Standardwerte (Namen und Farben, Ansicht, Gegner, Tempo, Darstellung, Töne, Gewinnanimation, Doppeltipp). „Abbrechen“ macht es rückgängig. Die Statistik bleibt unberührt.

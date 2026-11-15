@@ -855,6 +855,7 @@ function countDeal(){
 }
 // Fehlstart: Ein Spieler kann gleich nach dem Kartentausch keinen einzigen Zug machen. Gezählt je Spieler und Runde, aufs Team gerechnet.
 // S.stuckAdd merkt sich, was diese Runde dazugekommen ist, damit das Zurücknehmen des Tauschs es wieder abziehen kann.
+const hasMove=(ms,p,hand)=>legalMoves(ms,p,hand,false).length>0;
 function countStuck(){
   if(NO_DEAL_STATS||!STATS.deal)return;
   const a=[0,0];for(let p=0;p<4;p++)if(!hasMove(S.marbles,p,S.hands[p]))a[teamOf(p)]++;
