@@ -46,7 +46,8 @@ select,.btn{background:var(--panel);border:1px solid var(--line);border-radius:9
    Das Brett ist so gross, wie der Platz es zulässt (Containermaße der .boardArea). */
 .layout{flex:1 1 auto;min-height:0;width:100%;max-width:1060px;margin:0 auto;padding:8px 12px 10px;display:flex;flex-direction:column;gap:10px}
 .boardArea{flex:1 1 0;min-height:0;min-width:0;display:grid;place-items:center;container-type:size}
-@media (min-aspect-ratio:5/4){.layout{flex-direction:row;align-items:stretch;gap:20px}.layout>.panel{flex:0 0 clamp(250px,34vw,380px);justify-content:safe center;overflow-y:auto}}
+/* Querformat: rechte Spalte bis 400px, damit sechs Karten (6 × 60 + 5 × 8) auch auf Tablets in eine Reihe passen */
+@media (min-aspect-ratio:5/4){.layout{flex-direction:row;align-items:stretch;gap:20px}.layout>.panel{flex:0 0 clamp(250px,42vw,400px);justify-content:safe center;overflow-y:auto}}
 .boardBox{position:relative;width:min(100cqw,100cqh);aspect-ratio:1;isolation:isolate}
 /* Schatten des Bretts als eigene, statische Grafik: kein CSS-Filter auf dem animierten Brett (Chromium/Linux zeichnete damit Reste) */
 .boardShadow{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:-1}

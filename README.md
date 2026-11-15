@@ -78,7 +78,7 @@ Die Ebenen heissen `ic_aendi_*` und kollidieren deshalb nicht mit den Standard-I
 
 **Icon ändern:** Farben und Geometrie stehen oben in `scripts/make-icon.mjs` (Abschnitt „Gestaltung“). Danach `npm run icon:build` (braucht `sharp`, kommt mit `npm install`) und `npm run icon:install`. Wichtig bei eigenen Änderungen: Adaptive Icons zeigen immer nur den mittleren Kreis von 66 der 108 Einheiten sicher an. Alles Wichtige gehört dort hinein.
 
-## Vorstellungsgrafik (Google Play)
+## Store-Grafiken (Google Play)
 
 `store/play-store-feature-1024x500.png` zeigt drei echte Screenshots als Fächer: flaches Brett, 3D-Ansicht, Statistik. Neu erzeugen:
 
@@ -87,6 +87,15 @@ npm run feature:build
 ```
 
 Dafür muss ein Emulator mit der Debug-App laufen (Handy mit 1080 × 2400, z. B. „Medium Phone“). Das Skript `scripts/make-feature.ts` lässt die KI 30 Partien spielen (Statistik) und eine Stellung nach 4 Runden erzeugen (Brett). Es setzt beides in der App ein, nimmt die Screenshots auf und stellt danach die Daten der App, die Drehung und die Statusleiste wieder her. Die Rohbilder und eine Sicherung der App-Daten liegen in `store/feature-src/` (nicht im Git). Siege, Schläge und Endstände der Statistik stammen aus den KI-Partien, Datum und Spieldauer sind geschätzt.
+
+**Screenshots** für Telefon, 7-Zoll- und 10-Zoll-Tablet (je fünf: Spiel flach, 3D, Murmelsicht, Statistik, Einstellungen) liegen in `store/screenshots/`. Neu erzeugen:
+
+```bash
+npm run screenshots:build              # alle drei Gerätetypen
+npm run screenshots:build -- tablet-10 # nur einer (phone, tablet-7, tablet-10)
+```
+
+Das Skript `scripts/make-screenshots.ts` stellt den laufenden Emulator mit `wm size` und `wm density` nacheinander um: Telefon 1080 × 1920 (Hochformat), 7-Zoll-Tablet 1920 × 1080 und 10-Zoll-Tablet 2560 × 1440 (beide Querformat). Das sind die Formate, die Google Play für Empfehlungen verlangt (9:16 bzw. 16:9, mindestens 1080 px, PNG ohne Alphakanal). Spielstand und Statistik kommen wie bei der Vorstellungsgrafik aus KI-Partien. Danach setzt es Bildschirm, App-Daten, Drehung und Statusleiste zurück. Der gemeinsame Code beider Skripte (adb, Zugriff auf die WebView, KI-Partien) steht in `scripts/emu.ts`.
 
 ## Projektstruktur
 
@@ -101,6 +110,8 @@ index.html    Grundgerüst (Kopfzeile mit Menü, Brett, Hand, Dialoge)
 tests/        Regeltests (Vitest)
 scripts/sim.ts  KI gegen KI ohne Oberfläche
 scripts/make-feature.ts  Vorstellungsgrafik für Google Play aus Emulator-Screenshots
+scripts/make-screenshots.ts  Store-Screenshots für Telefon, 7- und 10-Zoll-Tablet
+scripts/emu.ts  gemeinsamer Code der Store-Skripte (adb, WebView, KI-Beispieldaten)
 scripts/android-offline.mjs  entfernt die INTERNET-Berechtigung aus dem Android-Projekt
 tools/soundlabor.html  Soundlabor: Töne anhören, auswählen, Lautstärke und Geschwindigkeit einstellen (eigenständige Seite)
 tools/animationslabor.html  Animationslabor: Gewinnanimationen ansehen, auswählen, Menge und Dauer einstellen (eigenständige Seite)
