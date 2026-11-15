@@ -173,7 +173,7 @@ const playsFirst=p=>((p-S.roundStart+4)%4)<(((p+2)%4-S.roundStart+4)%4);
 // ===== Töne: mit Web Audio im Browser erzeugt, ohne Tondateien. Ein und Aus unter Einstellungen → Töne. =====
 // Mischen (Riffeln), Austeilen (Karte rutscht), Murmel hinstellen (Klack mit Glasklang), Murmel ziehen (ein Ticken je Feld).
 const SND_KEY='aendi-dog-sound';
-const SND={on:true,ctx:null,out:null,noise:null,gestureAt:-1e9,quiet:false};
+const SND={on:false,ctx:null,out:null,noise:null,gestureAt:-1e9,quiet:false};
 // Relative Lautstärke je Tonart (wurde am gerenderten Ton nachgemessen, damit alles ungefähr gleich laut wirkt)
 // Lautstärke je Tonart (am gerenderten Ton nachgemessen und angeglichen; die Töne sind die Auswahl aus dem Soundlabor)
 const SNDG={shuffle:1.94,deal:.58,slide:.40,lay:.65,set:.35,step:.41,kill:.38};   // Mischen: Laborwert 1,21 × 1,6 (so gewählt)
@@ -1227,14 +1227,14 @@ function init(){
   $('setDlg').addEventListener('click',e=>{if(POP!==null&&!e.target.closest('#colPop'))closePop()});
   $('setReset').onclick=()=>{ // alles auf die Standardwerte; „Abbrechen“ macht es wieder rückgängig
     DRAFT=SEAT_DEF.map(s=>({...s}));closePop();renderSeatRows();
-    for(const [id,v] of Object.entries({view:'2d',lvl:'hard',spd:'normal',theme:'auto',snd:'1',fx:'1',dbl:'500'})){const e=$(id);if(e.value!==v){e.value=v;e.dispatchEvent(new Event('change'))}}
+    for(const [id,v] of Object.entries({view:'2d',lvl:'hard',spd:'normal',theme:'auto',snd:'0',fx:'1',dbl:'500'})){const e=$(id);if(e.value!==v){e.value=v;e.dispatchEvent(new Event('change'))}}
   };
   {let t='auto';try{t=localStorage.getItem(THEME_KEY)||'auto'}catch(e){}
    $('theme').value=(t==='light'||t==='dark')?t:'auto';applyTheme($('theme').value);
    $('theme').onchange=e=>applyTheme(e.target.value)}
   {let v=500;try{const s=localStorage.getItem(DBL_KEY);if(s!==null&&[...$('dbl').options].some(o=>o.value===s))v=+s}catch(e){}
    DBL_MS=v;$('dbl').value=String(v);$('dbl').onchange=e=>{DBL_MS=+e.target.value;clearTimeout(GIVE_T);reserveStatus();render()}}
-  {let s='1';try{s=localStorage.getItem(SND_KEY)||'1'}catch(e){}
+  {let s='0';try{s=localStorage.getItem(SND_KEY)||'0'}catch(e){}   // Standard: Töne aus
    SND.on=s!=='0';$('snd').value=SND.on?'1':'0';
    $('snd').onchange=e=>{SND.on=e.target.value==='1';if(SND.on){audio();setTimeout(()=>sndSet(),60)}}}
   {let f='1';try{f=localStorage.getItem(FX_KEY)||'1'}catch(e){}
