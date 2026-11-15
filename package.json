@@ -14,7 +14,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "icon:build": "node scripts/make-icon.mjs",
-    "icon:install": "node scripts/install-icon.mjs"
+    "icon:install": "node scripts/install-icon.mjs",
+    "feature:build": "tsx scripts/make-feature.ts"
   },
   "dependencies": {
     "@capacitor/android": "^7.0.0",

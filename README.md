@@ -78,6 +78,16 @@ Die Ebenen heissen `ic_aendi_*` und kollidieren deshalb nicht mit den Standard-I
 
 **Icon ändern:** Farben und Geometrie stehen oben in `scripts/make-icon.mjs` (Abschnitt „Gestaltung“). Danach `npm run icon:build` (braucht `sharp`, kommt mit `npm install`) und `npm run icon:install`. Wichtig bei eigenen Änderungen: Adaptive Icons zeigen immer nur den mittleren Kreis von 66 der 108 Einheiten sicher an. Alles Wichtige gehört dort hinein.
 
+## Vorstellungsgrafik (Google Play)
+
+`store/play-store-feature-1024x500.png` zeigt drei echte Screenshots als Fächer: flaches Brett, 3D-Ansicht, Statistik. Neu erzeugen:
+
+```bash
+npm run feature:build
+```
+
+Dafür muss ein Emulator mit der Debug-App laufen (Handy mit 1080 × 2400, z. B. „Medium Phone“). Das Skript `scripts/make-feature.ts` lässt die KI 30 Partien spielen (Statistik) und eine Stellung nach 4 Runden erzeugen (Brett). Es setzt beides in der App ein, nimmt die Screenshots auf und stellt danach die Daten der App, die Drehung und die Statusleiste wieder her. Die Rohbilder und eine Sicherung der App-Daten liegen in `store/feature-src/` (nicht im Git). Siege, Schläge und Endstände der Statistik stammen aus den KI-Partien, Datum und Spieldauer sind geschätzt.
+
 ## Projektstruktur
 
 ```
@@ -90,6 +100,7 @@ src/
 index.html    Grundgerüst (Kopfzeile mit Menü, Brett, Hand, Dialoge)
 tests/        Regeltests (Vitest)
 scripts/sim.ts  KI gegen KI ohne Oberfläche
+scripts/make-feature.ts  Vorstellungsgrafik für Google Play aus Emulator-Screenshots
 scripts/android-offline.mjs  entfernt die INTERNET-Berechtigung aus dem Android-Projekt
 tools/soundlabor.html  Soundlabor: Töne anhören, auswählen, Lautstärke und Geschwindigkeit einstellen (eigenständige Seite)
 tools/animationslabor.html  Animationslabor: Gewinnanimationen ansehen, auswählen, Menge und Dauer einstellen (eigenständige Seite)
