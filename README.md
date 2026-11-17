@@ -4,12 +4,12 @@
 
 ## Version
 
-Aktuell **0.2.16**. Die Versionsnummer steht an zwei Stellen und muss bei jeder neuen Version an beiden erhöht werden:
+Aktuell **0.2.17**. Die Versionsnummer steht an zwei Stellen und muss bei jeder neuen Version an beiden erhöht werden:
 
 - `package.json` → `"version"`
 - `index.html` → `<p class="ver" id="appVer">Version …</p>` (unten im ☰-Menü sichtbar)
 
-Für den Play Store liest `android/app/build.gradle` die Nummer aus `package.json`: `versionName` ist dieselbe Nummer, `versionCode` wird daraus berechnet (x·10000 + y·100 + z, also 0.2.16 → 216). Was sich geändert hat, steht in `CHANGELOG.md`. Die Taktik der Computerspieler ist in `RULES.md` beschrieben.
+Für den Play Store liest `android/app/build.gradle` die Nummer aus `package.json`: `versionName` ist dieselbe Nummer, `versionCode` wird daraus berechnet (x·10000 + y·100 + z, also 0.2.17 → 217). Was sich geändert hat, steht in `CHANGELOG.md`. Die Taktik der Computerspieler ist in `RULES.md` beschrieben.
 
 ## Voraussetzungen
 

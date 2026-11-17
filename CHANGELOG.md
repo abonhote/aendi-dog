@@ -2,6 +2,10 @@
 
 Versionen nach [Semantic Versioning](https://semver.org/lang/de/): `0.0.x` = Entwicklungsstand vor der ersten Veröffentlichung.
 
+## 0.2.17
+
+- **„Über Ändi Dog“ verweist auf GitHub** statt auf eine E-Mail-Adresse: Der Link öffnet https://github.com/abonhote/aendi-dog. „Angaben kopieren“ bleibt (Version, wahlweise Spielverlauf und Spielbrett) und kopiert jetzt immer alles, zum Einfügen in eine Fehlermeldung. `CONTACT_MAIL` und die Kürzung für den mailto-Link sind entfernt.
+
 ## 0.2.16
 
 - **Fehler behoben:** Nach dem Kartentausch blieb das Spiel stehen, die Handkarten liessen sich nicht mehr antippen. Die Zählung der „Fehlstarts“ rief eine nicht vorhandene Funktion (`hasMove`) auf.

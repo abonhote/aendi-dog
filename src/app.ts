@@ -1075,7 +1075,6 @@ function renderLog(){
 }
 
 // ---------- Über Ändi Dog / Kontakt ----------
-const CONTACT_MAIL='aendi-dog@problemlos.ch';
 const cardTxt=c=>c.r==='JO'?'Joker':c.r+c.s;
 // Spielbrett als Text: Hände, Murmeln (Zwinger, Bahn 0–63, Ziel) und oberste Ablagekarte
 function boardText(){
@@ -1088,26 +1087,16 @@ function boardText(){
   if(S.last)L.push('Zuletzt gespielt: '+cardTxt(S.last.card)+' von '+NAMES[S.last.p]);
   return L.join('\n');
 }
-// Ein mailto-Link kann nichts anhängen: Die Angaben stehen im Text und werden gekürzt, damit der Link nicht zu lang wird
-function reportText(withLog,withBoard,max){
-  const head=`\n\n--\n${$('appVer').textContent}`;
-  const parts=[];if(withBoard&&S)parts.push(boardText());
-  const log=withLog&&S?S.log.map(e=>e.t):[];
-  let n=log.length,cut=false;
-  const build=k=>head+(parts.length||k?'\n\n':'')+[...parts,...(k?['Spielverlauf (neueste zuerst):\n'+log.slice(0,k).join('\n')]:[])].join('\n\n');
-  while(n>0&&encodeURIComponent(build(n)).length>max){n--;cut=true}
-  let text=build(n);
-  if(encodeURIComponent(text).length>max){text=head;cut=true}
-  return {text,cut};
-}
-function updMail(){
-  const r=reportText($('mailLog').checked,$('mailBoard').checked,1800);
-  $('mailLink').href='mailto:'+CONTACT_MAIL+'?subject='+encodeURIComponent('Ändi Dog')+'&body='+encodeURIComponent(r.text);
-  const n=$('mailNote');n.hidden=!r.cut;n.textContent=r.cut?'Zu lang für den Mail-Link, gekürzt. „Angaben kopieren“ liefert alles.':'';
+// Angaben für eine Fehlermeldung (zum Einfügen auf GitHub): Version, wahlweise Spielbrett und Spielverlauf
+function reportText(withLog,withBoard){
+  const parts=[$('appVer').textContent];
+  if(withBoard&&S)parts.push(boardText());
+  if(withLog&&S&&S.log.length)parts.push('Spielverlauf (neueste zuerst):\n'+S.log.map(e=>e.t).join('\n'));
+  return parts.join('\n\n');
 }
 function openAbout(){
   $('aboutVer').textContent=$('appVer').textContent;
-  $('mailLog').checked=$('mailBoard').checked=false;updMail();$('aboutDlg').showModal();
+  $('reportLog').checked=$('reportBoard').checked=false;$('aboutDlg').showModal();
 }
 
 // ---------- Persistence ----------
@@ -1203,9 +1192,8 @@ function init(){
    $('statsBtn').addEventListener('click',()=>{close();openStats()});
    $('aboutBtn').addEventListener('click',()=>{close();openAbout()});
   $('aboutClose').onclick=()=>$('aboutDlg').close();
-  $('mailLog').onchange=$('mailBoard').onchange=updMail;
-  $('mailCopy').onclick=async()=>{const t=reportText($('mailLog').checked,$('mailBoard').checked,1e9).text;let ok=false;try{await navigator.clipboard.writeText(t);ok=true}catch(e){}
-    const b=$('mailCopy');b.textContent=ok?'Kopiert':'Kopieren nicht möglich';setTimeout(()=>b.textContent='Angaben kopieren',1800)};
+  $('reportCopy').onclick=async()=>{const t=reportText($('reportLog').checked,$('reportBoard').checked);let ok=false;try{await navigator.clipboard.writeText(t);ok=true}catch(e){}
+    const b=$('reportCopy');b.textContent=ok?'Kopiert':'Kopieren nicht möglich';setTimeout(()=>b.textContent='Angaben kopieren',1800)};
   $('logBtn').addEventListener('click',()=>{close();renderLog();$('logDlg').showModal()});
    $('setBtn').addEventListener('click',()=>{close();openSettings()});
    $('logClose').onclick=()=>$('logDlg').close();}
