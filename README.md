@@ -44,6 +44,25 @@ npm run android      # baut, kopiert nach android/ und öffnet Android Studio
 
 In Android Studio oben das Gerät wählen und auf ▶ (Run) klicken. Die APK für den Play Store entsteht über _Build → Generate Signed Bundle / APK_.
 
+### Signiertes Bundle für den Play Store
+
+Liegt `android/keystore.properties` vor, signiert Gradle den Release-Build selbst. Die Datei steht in `android/.gitignore` und kommt nie ins Repository, genauso wie `*.jks` und `*.keystore`:
+
+```properties
+storeFile=/Pfad/zu/upload-keystore.jks
+storePassword=…
+keyAlias=…
+keyPassword=…
+```
+
+Dann baut dieser Befehl das signierte Bundle nach `android/app/build/outputs/bundle/release/app-release.aab`. Gradle 8.11 braucht dafür JDK 21; das Java von Android Studio kann neuer sein:
+
+```bash
+npm run build && npx cap sync android && cd android && JAVA_HOME=/Pfad/zu/jdk-21 ./gradlew bundleRelease
+```
+
+Ohne `keystore.properties` bleibt der Release-Build unsigniert, dann wie oben über Android Studio signieren.
+
 ## Offline, ohne Internetberechtigung
 
 Das Spiel braucht kein Internet: Es gibt keine Netzwerkaufrufe, keine Werbung und keine Übertragung von Daten, alles bleibt auf dem Gerät (`localStorage`). Damit die App das auch nach aussen zeigt:

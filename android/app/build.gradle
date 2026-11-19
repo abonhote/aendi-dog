@@ -4,6 +4,14 @@ apply plugin: 'com.android.application'
 def appVersionName = new groovy.json.JsonSlurper().parse(rootProject.file('../package.json')).version
 def appVersionCode = appVersionName.tokenize('.').collect { it as int }.with { it[0] * 10000 + it[1] * 100 + it[2] }
 
+// Signierschlüssel aus android/keystore.properties (nicht im Repository, siehe android/.gitignore).
+// Fehlt die Datei, wird der Release-Build wie bisher unsigniert gebaut.
+def keystorePropsFile = rootProject.file('keystore.properties')
+def keystoreProps = new Properties()
+if (keystorePropsFile.exists()) {
+    keystorePropsFile.withInputStream { keystoreProps.load(it) }
+}
+
 android {
     namespace "ch.aendi.aendidog"
     compileSdk rootProject.ext.compileSdkVersion
@@ -20,8 +28,21 @@ android {
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        if (keystorePropsFile.exists()) {
+            release {
+                storeFile file(keystoreProps['storeFile'])
+                storePassword keystoreProps['storePassword']
+                keyAlias keystoreProps['keyAlias']
+                keyPassword keystoreProps['keyPassword']
+            }
+        }
+    }
     buildTypes {
         release {
+            if (keystorePropsFile.exists()) {
+                signingConfig signingConfigs.release
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
