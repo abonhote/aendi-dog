@@ -2,7 +2,7 @@
 /**
  * App: Oberfläche, Spielablauf und Statistik.
  *
- * Diese Datei ist 1:1 der Stand der spielbaren Vorschau (Artifact) und deshalb noch untypisiert
+ * Diese Datei ist 1:1 der Stand der spielbaren Vorschau (Artifact) und deshalb noch npm install --save-dev prettieruntypisiert
  * (@ts-nocheck). Die Spiellogik liegt typisiert und getestet in engine.ts. Wenn du hier etwas
  * änderst und es typisieren möchtest: @ts-nocheck entfernen und die Meldungen von `npm run check`
  * Abschnitt für Abschnitt abarbeiten.
@@ -75,7 +75,29 @@ const handCmp=(a,b)=>RORDER.indexOf(a.r)-RORDER.indexOf(b.r)||SUITORD.indexOf(a.
 const SAVE_KEY='braendi-dog-v2';
 const C=200,NS='http://www.w3.org/2000/svg';
 const $=id=>document.getElementById(id);
-const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+// Pausierbare Timer: Solange das Menü oder ein Dialog offen ist, steht das Spiel still
+// (Züge, Murmeln, fliegende Karten, Töne) und läuft danach genau dort weiter.
+const TIMERS=new Set();let PAUSED=false,PAUSED_ANIMS=[];
+function armTimer(t){t.t0=performance.now();t.id=setTimeout(()=>{TIMERS.delete(t);t.fn()},t.left)}
+function later(fn,ms){const t={fn,left:Math.max(0,ms||0),t0:0,id:0};TIMERS.add(t);if(!PAUSED)armTimer(t);return t}
+const sleep=ms=>new Promise(r=>later(r,ms));
+function setPaused(on){
+  if(on===PAUSED)return;PAUSED=on;
+  if(on){
+    const now=performance.now();for(const t of TIMERS){clearTimeout(t.id);t.left=Math.max(0,t.left-(now-t.t0))}
+    // Animationen im Menü und in Dialogen selbst laufen weiter, alles andere hält an
+    PAUSED_ANIMS=document.getAnimations().filter(a=>{const e=a.effect&&a.effect.target;return a.playState==='running'&&!(e&&e.closest&&e.closest('.top,dialog'))});
+    for(const a of PAUSED_ANIMS)a.pause();
+    if(SND.ctx&&SND.ctx.state==='running')SND.ctx.suspend();
+  }else{
+    for(const t of TIMERS)armTimer(t);
+    for(const a of PAUSED_ANIMS)try{a.play()}catch(e){}
+    PAUSED_ANIMS=[];
+    if(SND.ctx&&SND.ctx.state==='suspended'&&SND.on)SND.ctx.resume();
+  }
+}
+// Erst nach dem aktuellen Klick prüfen: Ein Menüpunkt schliesst das Menü und öffnet gleich danach einen Dialog.
+const syncPause=()=>setTimeout(()=>setPaused(!$('menu').hidden||!!document.querySelector('dialog[open]')),0);
 let S=null,UI=freshUI(),busy=false,TP=[];
 function freshUI(k){return {card:null,val:null,cand:null,k:0,temp:null,sel:null,pend:null,applied:[],give:null,recv:k&&UI?UI.recv:null}}
 function delay(){return {slow:1000,normal:450,fast:200}[S.speed]||450}
@@ -457,7 +479,7 @@ function flyCard(html,cls,from,to,dur,wait,sh,snd){
   const T=q=>q.tf||`translate(${q[0]-hw}px,${q[1]-hh}px) scale(${q[2]||1}) rotate(${q[3]||0}deg)`;
   const k0={transform:T(from)},k1={transform:T(to)};if(sh){k0.boxShadow=sh[0];k1.boxShadow=sh[1]}
   const a=e.animate([k0,k1],{duration:dur,delay:wait||0,easing:'cubic-bezier(.5,.05,.3,1)',fill:'both'});
-  if(snd){if(snd.go)setTimeout(snd.go,wait||0);if(snd.land)setTimeout(snd.land,(wait||0)+dur*.93)}
+  if(snd){if(snd.go)later(snd.go,wait||0);if(snd.land)later(snd.land,(wait||0)+dur*.93)}
   return a.finished.then(()=>e.remove(),()=>e.remove());
 }
 function artikel(c){return c.r==='JO'?'einen Joker':c.r==='A'?'ein Ass':c.r==='B'?(isCH()?'einen Under':'einen Buben'):c.r==='D'?(isCH()?'einen Ober':'eine Dame'):c.r==='K'?'einen König':'eine '+c.r}
@@ -470,7 +492,7 @@ function proceed(){
     S.legal=legalMoves(S.marbles,0,S.hands[0],false);
     if(!S.legal.length){
       busy=true;render('Keine deiner Karten ist spielbar. Du legst alle ab und setzt diese Runde aus.');
-      {const g=GAME;setTimeout(async()=>{if(g!==GAME)return;const old=handRects(),cs=S.hands[0];S.hands[0]=[];render();
+      {const g=GAME;later(async()=>{if(g!==GAME)return;const old=handRects(),cs=S.hands[0];S.hands[0]=[];render();
         await foldToPile(cs,0,cs.map(c=>old.get(c.id)));if(g!==GAME)return render();
         S.hands[0]=cs;fold(0);busy=false;S.turn=1;proceed()},1900*(delay()/700));}
       return;
@@ -511,7 +533,7 @@ async function animateSeg(ms,seg){
   const toTop=id=>{const e=$('m'+id);e.parentNode.appendChild(e);e.getBoundingClientRect()};
   if(seg.t==='sw')toTop(seg.o);toTop(m.id);
   const place=(x,dur,lift)=>{const e=$('m'+x.id),sh=$('ms'+x.id);e.style.transitionDuration=sh.style.transitionDuration=dur+'ms';const [px,py]=marblePt(w,x);e.style.transform=sh.style.transform=`translate(${px}px,${py}px)`+(lift?' scale(1.2)':'')};
-  if(seg.t==='sw'){const o=w[seg.o];const l=m.loc,p=m.pos;m.loc=o.loc;m.pos=o.pos;o.loc=l;o.pos=p;place(m,750,true);place(o,750,true);setTimeout(()=>{sndStep(true);setTimeout(()=>sndStep(true),110)},690);await sleep(770);place(m,150);place(o,150);await sleep(160);for(const x of w){$('m'+x.id).style.transitionDuration='';$('ms'+x.id).style.transitionDuration=''}return}
+  if(seg.t==='sw'){const o=w[seg.o];const l=m.loc,p=m.pos;m.loc=o.loc;m.pos=o.pos;o.loc=l;o.pos=p;place(m,750,true);place(o,750,true);later(()=>{sndStep(true);later(()=>sndStep(true),110)},690);await sleep(770);place(m,150);place(o,150);await sleep(160);for(const x of w){$('m'+x.id).style.transitionDuration='';$('ms'+x.id).style.transitionDuration=''}return}
   const steps=[];
   if(seg.t==='out')steps.push({loc:'T',pos:startOf(m.color),kill:true});
   else if(m.loc==='G'){for(let i=m.pos+1;i<=seg.end.pos;i++)steps.push({loc:'G',pos:i})}
@@ -524,8 +546,8 @@ async function animateSeg(ms,seg){
     let killedHere=false;if(st.kill){const o=w.find(x=>x!==m&&x.loc==='T'&&x.pos===st.pos);if(o){o.loc='K';o.pos=0;killedHere=true}}
     for(const x of w)if(x!==m)place(x,650);
     place(m,dur,true);
-    if(seg.t==='out')setTimeout(()=>sndSet(),dur*.85);else setTimeout(()=>sndStep(st===steps[steps.length-1]),dur*.8);
-    if(killedHere)setTimeout(sndKill,450);
+    if(seg.t==='out')later(()=>sndSet(),dur*.85);else later(()=>sndStep(st===steps[steps.length-1]),dur*.8);
+    if(killedHere)later(sndKill,450);
     await sleep(dur);
   }
   $('m'+m.id).classList.remove('moving');
@@ -1277,8 +1299,9 @@ function init(){
   $('rulesBtn').onclick=()=>{renderCardDemo();$('rules').showModal()};
   // Hamburger-Menü: öffnen/schliessen, Klick daneben oder Escape schliesst
   {const mb=$('menuBtn'),mn=$('menu');
-   const close=()=>{mn.hidden=true;mb.setAttribute('aria-expanded','false')};
-   mb.onclick=e=>{e.stopPropagation();const open=mn.hidden;mn.hidden=!open;mb.setAttribute('aria-expanded',String(open));if(open)(mn.querySelector('button')||mb).focus()};
+   const close=()=>{mn.hidden=true;mb.setAttribute('aria-expanded','false');syncPause()};
+   mb.onclick=e=>{e.stopPropagation();const open=mn.hidden;mn.hidden=!open;mb.setAttribute('aria-expanded',String(open));if(open){setPaused(true);(mn.querySelector('button')||mb).focus()}else syncPause()};
+   for(const d of document.querySelectorAll('dialog'))d.addEventListener('close',syncPause);
    document.addEventListener('click',e=>{if(!mn.hidden&&!mn.contains(e.target)&&!mb.contains(e.target))close()});
    document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!mn.hidden){close();mb.focus()}});
    $('rulesBtn').addEventListener('click',close);
