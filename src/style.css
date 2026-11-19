@@ -211,7 +211,7 @@ dialog h2{font-family:"Bricolage Grotesque",system-ui,sans-serif;margin:0 0 8px;
 dialog h3{margin:16px 0 4px;font-size:16px}
 dialog p,dialog li{font-size:15px;margin:4px 0}
 dialog ul{padding-left:18px;margin:4px 0}
-.opt{display:flex;gap:10px;align-items:flex-start;font-size:15px;margin:8px 0;cursor:pointer}.opt input{margin-top:3px;width:18px;height:18px;accent-color:var(--c0)}
+.opt{display:flex;gap:10px;align-items:flex-start;font-size:15px;margin:8px 0;cursor:pointer}.opt input{flex:none;margin-top:3px;width:15px;height:15px;accent-color:var(--c0)}
 @media (prefers-reduced-motion:reduce){.marble,.mshadow,.card{transition:none}.canring,.target{animation:none}}
 @media (max-width:420px){:root{--cw:52px;--chh:74.5px}.card{border-radius:7.8px;padding:5.2px}.card .r{font-size:16.5px}.card .s{font-size:20.8px}.card .si{width:24.3px;height:24.3px}.card.joker .r{font-size:12.1px}#hand{gap:6px}}
 /* Niedrige Bildschirme (kleine Handys, Querformat): Kopf und Karten kompakter */
