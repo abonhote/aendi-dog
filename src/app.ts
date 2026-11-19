@@ -77,7 +77,7 @@ const C=200,NS='http://www.w3.org/2000/svg';
 const $=id=>document.getElementById(id);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 let S=null,UI=freshUI(),busy=false,TP=[];
-function freshUI(k){return {card:null,val:null,cand:null,k:0,temp:null,sel:null,applied:[],give:null,recv:k&&UI?UI.recv:null}}
+function freshUI(k){return {card:null,val:null,cand:null,k:0,temp:null,sel:null,pend:null,applied:[],give:null,recv:k&&UI?UI.recv:null}}
 function delay(){return {slow:1000,normal:450,fast:200}[S.speed]||450}
 function stepMs(){return {slow:200,normal:120,fast:72}[S.speed]||120}
 function rot(p,dx,dy){return p===0?[dx,dy]:p===1?[dy,-dx]:p===2?[-dx,-dy]:[-dy,dx]}
@@ -145,7 +145,10 @@ function buildBoard(){
   el('g',{id:'marbles'},svg);
   for(let i=0;i<16;i++)el('circle',{r:8,cx:0,cy:0,class:'marble',id:'m'+i,fill:`url(#mg${i>>2})`},$('marbles'));
   el('g',{id:'hl'},svg);
+  el('g',{id:'drag'},svg);
   svg.addEventListener('click',onBoardClick);
+  svg.addEventListener('pointerdown',onBoardDown);svg.addEventListener('pointermove',onBoardMove);
+  svg.addEventListener('pointerup',onBoardUp);svg.addEventListener('pointercancel',onBoardUp);
 }
 
 // ---------- Game flow ----------
@@ -615,7 +618,7 @@ function onCard(id){
   selectVal(card.r);
 }
 function selectVal(v){
-  UI.val=v;UI.k=0;UI.temp=cloneMs(S.marbles);UI.applied=[];UI.sel=null;
+  UI.val=v;UI.k=0;UI.temp=cloneMs(S.marbles);UI.applied=[];UI.sel=null;UI.pend=null;
   if(v==='7'){UI.cand=sevenCands();autoSel();render();return} // Sieben: Schritt für Schritt, die Murmeln dürfen sich beliebig abwechseln
   UI.cand=S.legal.filter(m=>m.card.id===UI.card.id&&m.val===v);
   if(UI.cand.some(c=>!c.segs.length)){commitHuman();return}
@@ -644,6 +647,19 @@ function autoSel(){
 function targetsFor(id){
   const s=new Set();for(const c of UI.cand){const seg=c.segs[UI.k];if(seg&&segMatchMarble(seg,id))s.add(seg.to)}return s;
 }
+// Alle Zielfelder des nächsten Teilschritts, egal mit welcher Murmel
+function allTargets(){
+  const s=new Set();for(const c of UI.cand){const seg=c.segs[UI.k];if(seg)s.add(seg.to)}return s;
+}
+// Welche Murmeln können auf das Feld „to“? Gruppen wie bei autoSel: alle Murmeln im Zwinger zählen als eine.
+function reachGroups(to){
+  const g=new Map();for(const c of UI.cand){const seg=c.segs[UI.k];if(seg&&seg.to===to)g.set(seg.t==='out'?'o':'m'+seg.m,seg.m)}return [...g.values()];
+}
+function reachIds(to){
+  const s=new Set();for(const c of UI.cand){const seg=c.segs[UI.k];if(!seg||seg.to!==to)continue;for(const m of UI.temp)if(segMatchMarble(seg,m.id))s.add(m.id)}return s;
+}
+// Direkt ein Zielfeld antippen ist möglich, ausser bei der Sieben (dort wären es zu viele Felder auf einmal)
+const directTargets=()=>UI.sel==null&&UI.pend==null&&UI.val!=='7';
 // Auf kleinen Screens sind die Löcher nur wenige Pixel gross: Statt exakt treffen zu müssen,
 // gewinnt die nächstgelegene gültige Murmel bzw. das nächste Zielfeld im Umkreis.
 // Der Umkreis ist der halbe Abstand zwischen zwei Nachbarlöchern, aber nie kleiner als eine
@@ -666,17 +682,58 @@ function nearestHit(cx,cy){
   return best;
 }
 function onBoardClick(e){
-  if(busy||!UI.cand)return;
+  if(busy||!UI.cand||performance.now()<NOCLICK)return;
   const t=e.clientX!=null&&e.detail!==0?nearestHit(e.clientX,e.clientY):e.target.closest('[data-to],[data-mid]');if(!t)return;
-  if(t.dataset.to){chooseTarget(t.dataset.to);return}
-  const id=+t.dataset.mid;UI.sel=UI.sel===id&&selectableIds().size>1?null:id;render();
+  if(t.dataset.to){
+    const to=t.dataset.to;
+    if(UI.sel!=null){chooseTarget(to);return}
+    if(UI.pend===to){UI.pend=null;render();return} // nochmals antippen: zurück zur Auswahl
+    const ids=reachGroups(to);
+    if(ids.length===1){UI.sel=ids[0];chooseTarget(to);return}
+    UI.pend=to;render();return; // mehrere Murmeln kommen dorthin: welche?
+  }
+  const id=+t.dataset.mid;
+  if(UI.pend!=null){const to=UI.pend;UI.pend=null;UI.sel=id;chooseTarget(to);return}
+  UI.sel=UI.sel===id&&selectableIds().size>1?null:id;render();
+}
+// Murmel aufs Zielfeld ziehen: Sie rastet auf dem nächsten gültigen Feld ein, Loslassen zieht.
+let DRAG=null,NOCLICK=0;
+const DRAG_PX=8;
+function svgPt(cx,cy){const svg=$('board'),p=svg.createSVGPoint();p.x=cx;p.y=cy;const q=p.matrixTransform(svg.getScreenCTM().inverse());return [q.x,q.y]}
+function onBoardDown(e){
+  DRAG=null;
+  if(busy||!UI.cand||e.button>0||!e.isPrimary)return;
+  const h=nearestHit(e.clientX,e.clientY);if(!h||h.dataset.mid==null)return;
+  DRAG={id:+h.dataset.mid,x0:e.clientX,y0:e.clientY,pid:e.pointerId,on:false,to:null,ghost:null};
+}
+function onBoardMove(e){
+  const d=DRAG;if(!d||e.pointerId!==d.pid)return;
+  if(!d.on){
+    if(Math.hypot(e.clientX-d.x0,e.clientY-d.y0)<DRAG_PX)return;
+    if(busy||!UI.cand){DRAG=null;return}
+    d.on=true;try{$('board').setPointerCapture(e.pointerId)}catch(err){}
+    if(UI.sel!==d.id){UI.sel=d.id;UI.pend=null;render()}
+    $('m'+d.id).classList.add('lifted');
+    d.ghost=el('circle',{r:8,class:'ghost',fill:`url(#mg${d.id>>2})`},$('drag'));
+  }
+  const h=nearestHit(e.clientX,e.clientY);d.to=h&&h.dataset.to||null;
+  const [x,y]=d.to?locPt(d.to):svgPt(e.clientX,e.clientY);
+  d.ghost.setAttribute('cx',x.toFixed(1));d.ghost.setAttribute('cy',y.toFixed(1));
+  d.ghost.classList.toggle('snap',!!d.to);
+}
+function onBoardUp(e){
+  const d=DRAG;if(!d||e.pointerId!==d.pid)return;
+  DRAG=null;if(!d.on)return;
+  NOCLICK=performance.now()+400; // der Klick nach dem Loslassen soll die Auswahl nicht wieder aufheben
+  $('drag').innerHTML='';$('m'+d.id).classList.remove('lifted');
+  if(e.type==='pointerup'&&d.to&&!busy&&UI.sel===d.id)chooseTarget(d.to);
 }
 async function chooseTarget(to){
   const sel=UI.sel;if(sel==null)return;
   const match=UI.cand.filter(c=>{const s=c.segs[UI.k];return s&&segMatchMarble(s,sel)&&s.to===to});
   if(!match.length)return;
   const seg={...match[0].segs[UI.k]};if(seg.t==='out')seg.m=sel;
-  UI.cand=match;UI.k++;UI.applied.push(seg);UI.sel=null;
+  UI.cand=match;UI.k++;UI.applied.push(seg);UI.sel=null;UI.pend=null;
   const g=GAME;busy=true;$('hl').innerHTML='';
   // Beim ersten Teilschritt fliegt die Karte zuerst auf den Stapel, danach ziehen die Murmeln
   if(UI.applied.length===1){
@@ -1011,12 +1068,26 @@ function renderHL(){
     for(const to of targetsFor(UI.sel)){const [tx,ty]=locPt(to);
       el('circle',{cx:tx,cy:ty,r:10,class:'target'},g);
       el('circle',{cx:tx,cy:ty,r:12,class:'hit','data-to':to},g)}
+  }else if(UI.pend!=null){
+    // Zielfeld gewählt, aber mehrere Murmeln kommen dorthin: nur diese zur Auswahl anbieten
+    const [tx,ty]=locPt(UI.pend);el('circle',{cx:tx,cy:ty,r:10,class:'target'},g);
+    for(const id of reachIds(UI.pend)){const [x,y]=marblePt(ms,ms[id]);
+      el('circle',{cx:x,cy:y,r:10.5,class:'canring'},g);
+      el('circle',{cx:x,cy:y,r:12,class:'hit','data-mid':id},g)}
+    el('circle',{cx:tx,cy:ty,r:12,class:'hit','data-to':UI.pend},g);
+    return;
   }
+  const direct=directTargets(),own=new Set();
   for(const id of selectableIds()){
     if(id===UI.sel)continue;const [x,y]=marblePt(ms,ms[id]);
     el('circle',{cx:x,cy:y,r:10.5,class:'canring'},g);
-    el('circle',{cx:x,cy:y,r:12,class:'hit','data-mid':id},g);
+    el('circle',{cx:x,cy:y,r:12,class:'hit','data-mid':id},g);own.add(Math.round(x)+','+Math.round(y));
   }
+  // Ohne gewählte Murmel lassen sich die Zielfelder direkt antippen (dezent markiert).
+  // Die Trefferflächen der Murmeln stehen davor, so gewinnt bei Gleichstand die Murmel.
+  if(direct)for(const to of allTargets()){const [tx,ty]=locPt(to);if(own.has(Math.round(tx)+','+Math.round(ty)))continue;
+    el('circle',{cx:tx,cy:ty,r:4.5,class:'ptarget'},g);
+    el('circle',{cx:tx,cy:ty,r:12,class:'hit','data-to':to},g)}
   if(UI.sel!=null){const [x,y]=marblePt(ms,ms[UI.sel]);if(selectableIds().size>1)el('circle',{cx:x,cy:y,r:12,class:'hit','data-mid':UI.sel},g)}
 }
 function renderHand(){
@@ -1086,8 +1157,9 @@ function renderStatus(msg){
     if(!UI.card)t=pre+(pre?'':'Du bist dran. ')+'Tippe eine Karte an oder wirf sie aufs Brett.';
     else if(UI.card.r==='JO'&&!UI.val)t='Als welche Karte setzt du den Joker ein?';
     else if(UI.val==='7'){const used=UI.applied.reduce((a,s)=>a+s.n,0);t=`Sieben: noch ${7-used} Schritt${7-used===1?'':'e'}. `+(UI.sel==null?'Wähle eine Murmel.':'Wähle, wie weit sie fährt.')}
-    else if(UI.val==='B')t=UI.sel==null?VLABEL.B+': Wähle deine Murmel.':'Mit welcher Murmel tauschen?';
-    else t=UI.sel==null?'Wähle eine Murmel.':'Wähle das Zielfeld.';
+    else if(UI.pend!=null)t=UI.val==='B'?'Welche deiner Murmeln tauscht?':'Welche Murmel soll dorthin?';
+    else if(UI.val==='B')t=UI.sel==null?VLABEL.B+': Wähle deine Murmel oder direkt, mit wem du tauschst.':'Mit welcher Murmel tauschen?';
+    else t=UI.sel==null?'Wähle eine Murmel oder direkt ihr Zielfeld.':'Wähle das Zielfeld.';
   }
   $('status').textContent=t;
 }

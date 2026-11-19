@@ -59,7 +59,7 @@ select,.btn{background:var(--panel);border:1px solid var(--line);border-radius:9
    radial-gradient(120% 90% at 50% 40%,transparent 55%,rgba(0,0,0,.18)),
    repeating-radial-gradient(ellipse 140% 60% at 18% 130%,var(--wood1) 0 9px,var(--wood2) 9px 13px,var(--wood1) 13px 21px,var(--wood3) 21px 22px);
 }
-#board{display:block;width:100%;height:100%;user-select:none;touch-action:manipulation}
+#board{display:block;width:100%;height:100%;user-select:none;touch-action:none}
 .octa{fill:none;stroke:var(--groove);stroke-opacity:.35;stroke-width:1.5}
 .mid{fill:var(--groove);fill-opacity:.1;stroke:var(--groove);stroke-opacity:.4;stroke-width:1.2}
 .seam{fill:none;stroke:var(--groove);stroke-opacity:.4;stroke-width:1.1}
@@ -143,6 +143,11 @@ select,.btn{background:var(--panel);border:1px solid var(--line);border-radius:9
 .selring{fill:none;stroke:var(--sel);stroke-width:2.4}
 .target{fill:rgba(255,255,255,.35);stroke:var(--sel);stroke-width:1.8;animation:pulse 1.1s ease-in-out infinite}
 .hit{fill:transparent;pointer-events:all;cursor:pointer}
+.ptarget{fill:var(--sel);opacity:.6}
+#drag{pointer-events:none}
+.ghost{opacity:.85;filter:drop-shadow(0 3px 3px rgba(0,0,0,.35))}
+.ghost.snap{opacity:1}
+.marble.lifted{opacity:.35}
 @keyframes pulse{50%{stroke-opacity:.3}}
 .panel{flex:none;display:flex;flex-direction:column;gap:8px;min-width:0}
 #status{margin:0;font-size:16px;font-weight:700;min-height:2.7em;line-height:1.35}

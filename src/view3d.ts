@@ -149,7 +149,7 @@ function svgSnapshot(){
   const a=src.querySelectorAll('*'),b=cl.querySelectorAll('*');
   const props=['fill','stroke','stroke-width','opacity','fill-opacity','stroke-opacity','stroke-dasharray','stroke-linecap','stroke-linejoin'];
   for(let i=0;i<a.length;i++){if(a[i].closest('defs'))continue;const cs=getComputedStyle(a[i]);for(const p of props){const v=cs.getPropertyValue(p);if(v)b[i].setAttribute(p,v)}b[i].removeAttribute('class');b[i].removeAttribute('style')}
-  for(const id of ['marbles','hl','center'])cl.querySelector('#'+id)?.remove();
+  for(const id of ['marbles','hl','drag','center'])cl.querySelector('#'+id)?.remove();
   cl.querySelectorAll('text').forEach(t=>t.remove());
   cl.setAttribute('xmlns','http://www.w3.org/2000/svg');cl.setAttribute('width',TS);cl.setAttribute('height',TS);cl.removeAttribute('style');
   return new XMLSerializer().serializeToString(cl);
@@ -313,6 +313,7 @@ function scene(cam,isMini,t){
     const at=W(h.x,h.y,.4);
     if(h.cls==='canring'){draw(G.canR,{at,mode:M_FLAT,col:withA(COL.sel,.35+.6*pulse)});glow[key(h)]=.18*pulse}
     else if(h.cls==='selring'){draw(G.selR,{at,mode:M_FLAT,col:withA(COL.sel,.95)});glow[key(h)]=.32}
+    else if(h.cls==='ptarget'){draw(G.disc,{at,s:4.5,mode:M_FLAT,col:withA(COL.sel,.6)})}
     else if(h.cls==='target'){draw(G.disc,{at,s:10,mode:M_FLAT,col:[1,1,1,.32]});draw(G.tgtR,{at,mode:M_FLAT,col:withA(COL.sel,.4+.6*pulse)})}
   }
   decal(false);
