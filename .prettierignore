@@ -1,0 +1,6 @@
+android/
+dist/
+store/
+package-lock.json
+*.dm
+.idea/
