@@ -42,7 +42,7 @@ Danach nach jeder Änderung:
 npm run android      # baut, kopiert nach android/ und öffnet Android Studio
 ```
 
-In Android Studio oben das Gerät wählen und auf ▶ (Run) klicken. Die APK für den Play Store entsteht über *Build → Generate Signed Bundle / APK*.
+In Android Studio oben das Gerät wählen und auf ▶ (Run) klicken. Die APK für den Play Store entsteht über _Build → Generate Signed Bundle / APK_.
 
 ## Offline, ohne Internetberechtigung
 
@@ -50,7 +50,7 @@ Das Spiel braucht kein Internet: Es gibt keine Netzwerkaufrufe, keine Werbung un
 
 - **Schriften lokal:** Bricolage Grotesque und Atkinson Hyperlegible kommen aus den npm-Paketen `@fontsource/…` und werden mit der App gebaut (Importe in `src/main.ts`). Es gibt keinen Zugriff auf Google Fonts mehr. Die Schriften werden beim ersten `npm install` heruntergeladen (dafür braucht der PC Internet). Es sind die festen Schnitte 500 und 800 (Bricolage) und 400 und 700 (Atkinson). Die Google-Fassung mit automatischer optischer Grösse (`opsz`) gibt es so nicht, grosse Überschriften sehen minimal anders aus.
 - **Berechtigung entfernt:** Capacitor trägt `INTERNET` beim Anlegen des Projekts standardmässig ein. `npm run android` führt nach `cap sync` das Skript `scripts/android-offline.mjs` aus. Es markiert die Zeile in `AndroidManifest.xml` mit `tools:node="remove"`, sodass sie auch beim Zusammenführen der Manifeste nicht zurückkommt. Einzeln: `npm run android:offline`. Mehrfaches Ausführen schadet nicht.
-- **Prüfen** (einmal, nach dem ersten Bau): In Android Studio `AndroidManifest.xml` öffnen und unten den Reiter *Merged Manifest* wählen. `android.permission.INTERNET` darf dort nicht mehr vorkommen. Dann die App auf einem Gerät starten und Spiel, Töne und Statistik kurz ausprobieren.
+- **Prüfen** (einmal, nach dem ersten Bau): In Android Studio `AndroidManifest.xml` öffnen und unten den Reiter _Merged Manifest_ wählen. `android.permission.INTERNET` darf dort nicht mehr vorkommen. Dann die App auf einem Gerät starten und Spiel, Töne und Statistik kurz ausprobieren.
 - **Wieder online** (zum Beispiel für einen späteren Mehrspielermodus): In `AndroidManifest.xml` die Zeile wieder zu `<uses-permission android:name="android.permission.INTERNET" />` machen und `npm run android:offline` aus dem Skript `android` in `package.json` nehmen.
 - Findet `npm run build` eine Schriftdatei nicht, die Dateinamen im Paket ansehen: `ls node_modules/@fontsource/bricolage-grotesque/*.css` (und `atkinson-hyperlegible`), und die Importe in `src/main.ts` anpassen.
 
@@ -121,7 +121,7 @@ tools/animationslabor.html  Animationslabor: Gewinnanimationen ansehen, auswähl
 
 ## So funktioniert der Code
 
-**Spielzustand.** Die 16 Murmeln sind ein Array (`Board`). Jede Murmel hat `loc` (Zwinger `K`, Bahn `T`, Ziel `G`), `pos` und `fresh`. Die Bahn hat 64 Felder, der Start von Farbe *c* liegt auf Feld `16·c`. Eine *frische* Murmel kommt gerade aus dem Zwinger; sie blockiert alle anderen und ist geschützt.
+**Spielzustand.** Die 16 Murmeln sind ein Array (`Board`). Jede Murmel hat `loc` (Zwinger `K`, Bahn `T`, Ziel `G`), `pos` und `fresh`. Die Bahn hat 64 Felder, der Start von Farbe _c_ liegt auf Feld `16·c`. Eine _frische_ Murmel kommt gerade aus dem Zwinger; sie blockiert alle anderen und ist geschützt.
 
 **Züge.** `legalMoves()` berechnet für eine Hand alle erlaubten Züge. Ein Zug besteht aus Karte, gespieltem Wert und Teilschritten (`Seg`): `out` (aus dem Zwinger auf den Start), `sw` (Bube-Tausch) oder `mv` (fahren, mit allen betretenen Feldern in `tp`). Bei der Sieben gibt es mehrere `mv`-Schritte. Dieselbe Murmel darf dabei mehrmals vorkommen, und die Murmeln dürfen sich beliebig abwechseln. `gen7()` liefert der KI je erreichbarem Endzustand einen Zug. Die Oberfläche fragt Schritt für Schritt `sevenOptions()` ab; das bietet nur Schritte an, nach denen sich die 7 noch zu Ende fahren lässt.
 
@@ -164,7 +164,6 @@ Stellungen baust du mit einer Kurzschreibweise auf: `board({ 0: 'T10', 1: 'T0f',
 npm run sim                    # 20 Partien Stark gegen Mittel
 npm run sim -- hard hard 200   # Bewertung gegen sich selbst testen
 ```
-
 
 ## Ideen für später
 

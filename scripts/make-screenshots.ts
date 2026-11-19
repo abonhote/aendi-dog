@@ -21,17 +21,29 @@
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import sharp from 'sharp';
-import { KEYS, ROOT, begin, evaluate, loadStorage, log, makeBoard, makeStats, screencap, setScreen, sleep } from './emu';
+import {
+  KEYS,
+  ROOT,
+  begin,
+  evaluate,
+  loadStorage,
+  log,
+  makeBoard,
+  makeStats,
+  screencap,
+  setScreen,
+  sleep,
+} from './emu';
 
 const DEVICES = {
-  'phone':     { w: 1080, h: 1920, dpi: 420 },
-  'tablet-7':  { w: 1920, h: 1080, dpi: 320 * 0.625 },
+  phone: { w: 1080, h: 1920, dpi: 420 },
+  'tablet-7': { w: 1920, h: 1080, dpi: 320 * 0.625 },
   'tablet-10': { w: 2560, h: 1440, dpi: 320 },
 } as const;
 type Device = keyof typeof DEVICES;
 
 const OUT = join(ROOT, 'store/screenshots');
-const wanted = (process.argv.slice(2).filter(a => a in DEVICES) as Device[]);
+const wanted = process.argv.slice(2).filter(a => a in DEVICES) as Device[];
 const devices: Device[] = wanted.length ? wanted : (Object.keys(DEVICES) as Device[]);
 
 async function shot(dir: string, file: string) {
@@ -39,17 +51,28 @@ async function shot(dir: string, file: string) {
   await sharp(screencap()).flatten({ background: '#ffffff' }).removeAlpha().png().toFile(join(dir, file));
   log('  ' + file);
 }
-const click = (id: string) => evaluate(`document.getElementById('${id}').click();new Promise(r=>setTimeout(()=>{document.activeElement&&document.activeElement.blur();r(1)},700))`);
+const click = (id: string) =>
+  evaluate(
+    `document.getElementById('${id}').click();new Promise(r=>setTimeout(()=>{document.activeElement&&document.activeElement.blur();r(1)},700))`,
+  );
 
 log('KI-Partien für Statistik und Brett …');
-const stats = makeStats(), board = makeBoard();
+const stats = makeStats(),
+  board = makeBoard();
 mkdirSync(OUT, { recursive: true });
 
 const ses = await begin(join(OUT, 'localStorage-backup.json'));
-const data = { ...ses.backup, [KEYS.save]: JSON.stringify({ ...ses.save, marbles: board, winner: null }), [KEYS.stats]: JSON.stringify(stats), [KEYS.sound]: '0', [KEYS.theme]: 'light' };
+const data = {
+  ...ses.backup,
+  [KEYS.save]: JSON.stringify({ ...ses.save, marbles: board, winner: null }),
+  [KEYS.stats]: JSON.stringify(stats),
+  [KEYS.sound]: '0',
+  [KEYS.theme]: 'light',
+};
 try {
   for (const name of devices) {
-    const d = DEVICES[name], dir = join(OUT, name);
+    const d = DEVICES[name],
+      dir = join(OUT, name);
     mkdirSync(dir, { recursive: true });
     log(`${name}: ${d.w} × ${d.h}`);
     await setScreen(d.w, d.h, Math.round(d.dpi));

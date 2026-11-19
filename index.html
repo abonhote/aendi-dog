@@ -1,123 +1,282 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Ändi Dog</title>
-<script>try{var t=localStorage.getItem('aendi-dog-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
-</head>
-<body>
-<header class="top">
-  <h1>Ändi Dog</h1>
-  <button class="menuBtn" id="menuBtn" aria-label="Einstellungen" aria-expanded="false" aria-controls="menu"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
-  <div class="ctrl" id="menu" hidden>
-    <button class="btn" id="newBtn">Neues Spiel</button>
-    <button class="btn" id="setBtn">Einstellungen</button>
-    <button class="btn" id="logBtn">Spielverlauf</button>
-    <button class="btn" id="statsBtn">Statistik</button>
-    <button class="btn" id="rulesBtn" hidden>Regeln &amp; Varianten</button>
-    <button class="btn" id="aboutBtn">Über Ändi Dog</button>
-    <p class="ver" id="appVer">Version 0.2.17</p>
-  </div>
-</header>
-<main class="layout">
-  <div class="boardArea">
-  <div class="boardBox">
-    <svg class="boardShadow" viewBox="0 0 400 400" aria-hidden="true"><defs><filter id="bsh1" x="-20%" y="-20%" width="140%" height="150%"><feGaussianBlur stdDeviation="5.5"/></filter><filter id="bsh2" x="-5%" y="-5%" width="110%" height="112%"><feGaussianBlur stdDeviation="1.2"/></filter></defs><polygon points="100 5 300 5 395 100 395 300 300 395 100 395 5 300 5 100" transform="translate(0 7.5)" fill="#000" fill-opacity=".36" filter="url(#bsh1)"/><polygon points="100 5 300 5 395 100 395 300 300 395 100 395 5 300 5 100" transform="translate(0 1.5)" fill="#000" fill-opacity=".22" filter="url(#bsh2)"/></svg>
-    <div class="boardWrap"><svg id="board" viewBox="0 0 400 400" role="img" aria-label="Spielbrett"></svg></div>
-  </div>
-  </div>
-  <section class="panel">
-    <div class="statusBox"><p id="status" aria-live="polite"></p>
-    <div id="jokerPick" hidden></div><button class="jkArrow l" id="jkL" hidden aria-label="Weitere Werte links">‹</button><button class="jkArrow r" id="jkR" hidden aria-label="Weitere Werte rechts">›</button></div>
-    <div id="hand"></div>
-    <div class="actions"><button class="btn primary" id="actBtn" hidden></button><button class="btn" id="cancelBtn" hidden>Zug abbrechen</button><button class="btn" id="undoBtn" hidden>↶ Letzten Zug zurücknehmen</button></div>
-  </section>
-</main>
-<dialog id="logDlg" aria-labelledby="logTitle">
-  <h2 id="logTitle">Spielverlauf</h2>
-  <ol id="log"></ol>
-  <p style="margin-top:14px"><button class="btn primary" id="logClose">Schliessen</button></p>
-</dialog>
-<dialog id="aboutDlg" aria-labelledby="aboutTitle">
-  <h2 id="aboutTitle">Über Ändi Dog</h2>
-  <p id="aboutVer" class="muted"></p>
-  <h3>Kontakt</h3>
-  <p>Fehler, Wünsche oder Fragen: <a id="ghLink" href="https://github.com/abonhote/aendi-dog" target="_blank" rel="noopener">Ändi Dog auf GitHub</a></p>
-  <p class="muted">Für eine Fehlermeldung die Angaben kopieren und dort einfügen.</p>
-  <label class="opt"><input type="checkbox" id="reportLog"> Spielverlauf mitkopieren</label>
-  <label class="opt"><input type="checkbox" id="reportBoard"> Spielbrett mitkopieren</label>
-  <p style="margin-top:14px"><button class="btn" id="reportCopy">Angaben kopieren</button> <button class="btn primary" id="aboutClose">Schliessen</button></p>
-</dialog>
-<dialog id="setDlg" aria-labelledby="setTitle">
-  <h2 id="setTitle">Einstellungen</h2>
-  <div class="setGrid" id="seatRows"></div>
-  <div class="setSel">
-    <label>Ansicht <select id="view"><option value="2d">Flach</option><option value="3d">3D</option><option value="pov">Murmelsicht</option></select></label>
-    <label>Gegner <select id="lvl"><option value="easy">Leicht</option><option value="medium">Mittel</option><option value="hard" selected>Stark</option></select></label>
-    <label>Tempo <select id="spd"><option value="slow">Ruhig</option><option value="normal" selected>Normal</option><option value="fast">Zügig</option></select></label>
-    <label>Darstellung <select id="theme"><option value="auto">Automatisch</option><option value="light">Hell</option><option value="dark">Dunkel</option></select></label>
-    <label>Töne <select id="snd"><option value="1">Ein</option><option value="0">Aus</option></select></label>
-    <label>Gewinnanimation <select id="fx"><option value="1">Ein</option><option value="0">Aus</option></select></label>
-    <label>Doppeltipp <select id="dbl"><option value="300">0,3 s</option><option value="500">0,5 s</option><option value="800">0,8 s</option><option value="1200">1,2 s</option><option value="0">ohne Limit</option></select></label>
-  </div>
-  <div class="actions"><button class="btn primary" id="setSave">Speichern</button> <button class="btn" id="setCancel">Abbrechen</button> <button class="btn plain" id="setReset">Zurücksetzen</button></div>
-  <div class="colPop" id="colPop" role="listbox" aria-label="Farbe wählen" hidden></div>
-</dialog>
-<dialog id="newDlg" aria-labelledby="newTitle">
-  <h2 id="newTitle">Neues Spiel</h2>
-  <p class="muted">Diese Einstellungen gelten für das ganze Spiel und lassen sich währenddessen nicht ändern.</p>
-  <div id="ngRules">
-  <h3>Varianten</h3>
-  <label class="opt"><input type="checkbox" id="ngCan"> Kanadische 7er-Regel: Mit jeder 7 darfst du auch die Murmeln deines Partners fahren.</label>
-  <label class="opt"><input type="checkbox" id="ngJok"> Die achte Murmel darf nicht mit dem Joker ins Ziel.</label>
-  </div>
-  <p class="muted" id="ngWarn" hidden>Das laufende Spiel wird beendet und nicht in der Statistik gezählt.</p>
-  <div class="actions" style="margin-top:14px"><button class="btn primary" id="ngStart">Spiel starten</button><button class="btn" id="ngCancel">Abbrechen</button></div>
-</dialog>
-<dialog id="stats" aria-labelledby="statsTitle">
-  <h2 id="statsTitle">Statistik</h2>
-  <div id="statsBody"></div>
-  <p style="margin-top:16px"><button class="btn" id="statsReset">Statistik zurücksetzen …</button></p>
-  <div id="statsConfirm" class="confirmBox danger" hidden role="alertdialog"><p>Alle gespeicherten Partien werden gelöscht. Wirklich zurücksetzen?</p><div class="actions"><button class="btn primary" id="statsYes">Ja, löschen</button><button class="btn" id="statsNo">Abbrechen</button></div></div>
-  <p style="margin-top:14px"><button class="btn primary" id="statsClose">Schliessen</button></p>
-</dialog>
-<dialog id="rules">
-  <h2>So wird gespielt</h2>
-  <p><span id="teamLine">Du (Blau) spielst mit Grün gegen Rot und Gelb.</span> Erst wenn alle acht Murmeln eines Teams im Ziel sind, hat das Team gewonnen. Gespielt und gefahren wird im Gegenuhrzeigersinn.</p>
-  <h3>Runden</h3>
-  <p>Es werden 6, 5, 4, 3 und 2 Karten verteilt, dann beginnt es wieder bei 6. In jeder Runde tauschen die Partner verdeckt eine Karte. Der Spielbeginn wandert jede Runde eine Person weiter. Wer mit keiner Karte fahren kann, scheidet für diese Runde aus, seine Karten verfallen.</p>
-  <h3>Karten</h3>
-  <ul>
-    <li><b>Ass</b>: Start oder 1 bzw. 11 vorwärts.</li>
-    <li><b>König</b>: Start oder 13 vorwärts.</li>
-    <li><b>Dame</b> (Ober): 12 vorwärts.</li>
-    <li><b>Bube</b> (Under): eine eigene Murmel mit einer des Gegners oder Partners tauschen, auch wenn das ein Nachteil ist. Ohne erlaubten Tausch kann er nicht gespielt werden.</li>
-    <li><b>4</b>: 4 vor- oder rückwärts.</li>
-    <li><b>7</b>: in beliebige Schritte vorwärts aufteilbar, alle 7 müssen gefahren werden. Jede überholte Murmel geht zurück in den Zwinger, auch die eigene.</li>
-    <li><b>Joker</b>: Start oder Einsatz nach Wunsch.</li>
-    <li><b>2, 3, 5, 6, 8, 9, 10</b>: so viele Felder vorwärts.</li>
-  </ul>
-  <h3>Wichtig</h3>
-  <ul>
-    <li>Landen zwei Murmeln auf demselben Feld, muss die zuerst dagewesene zurück in den Zwinger, auch eine eigene.</li>
-    <li>Eine Murmel, die vom Zwinger auf den Start kommt, blockiert den Durchgang für alle und ist geschützt. Kommt sie später erneut auf den Start, blockiert sie nicht mehr.</li>
-    <li>Ins Ziel geht’s erst, wenn der eigene Start zum zweiten Mal berührt wird, vor- oder rückwärts. Im Ziel wird nicht übersprungen und nicht rückwärts gefahren.</li>
-    <li>Der schnellste Weg: Start, mit der 4 zurück, dann mit 5 bis 8 direkt ins Ziel.</li>
-    <li>Sind alle eigenen Murmeln im Ziel, spielst du mit denen deines Partners weiter. Den Rest einer 7 darfst du dafür schon verwenden.</li>
-  </ul>
-  <h3>Varianten</h3>
-  <p class="muted">Die Varianten gelten fürs ganze Spiel. Wählen kannst du sie beim Start eines neuen Spiels (☰ → Neues Spiel).</p>
-  <label class="opt"><input type="checkbox" id="optCan" disabled> Kanadische 7er-Regel: Mit jeder 7 darfst du auch die Murmeln deines Partners fahren.</label>
-  <label class="opt"><input type="checkbox" id="optJok" disabled> Die achte Murmel darf nicht mit dem Joker ins Ziel.</label>
-  <h3>Bedienung</h3>
-  <p>Tippe eine Karte, dann die markierte Murmel und das Zielfeld. Bei der 7 wählst du so lange Murmeln und Felder, bis alle sieben Schritte verteilt sind.</p>
-  <p>Unter „Ansicht“ kannst du das Brett in 3D drehen und zoomen. In der Murmelsicht fährt die Kamera mit der Murmel mit, die gerade unterwegs ist oder die du ausgewählt hast. Die Karte oben rechts zeigt dabei das ganze Brett von oben, und du kannst auch dort Murmeln und Felder antippen.</p>
-  <p style="margin-top:14px"><button class="btn primary" id="rulesClose">Verstanden</button></p>
-</dialog>
-<div id="winScrim" aria-hidden="true"></div>
-<canvas id="winFx" aria-hidden="true"></canvas>
-<button class="btn primary" id="newFloat" type="button" hidden>Neues Spiel</button>
-<script type="module" src="/src/main.ts"></script>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Ändi Dog</title>
+    <script>
+      try {
+        var t = localStorage.getItem('aendi-dog-theme');
+        if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <header class="top">
+      <h1>Ändi Dog</h1>
+      <button class="menuBtn" id="menuBtn" aria-label="Einstellungen" aria-expanded="false" aria-controls="menu">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+          <path
+            d="M4 7h16M4 12h16M4 17h16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+      <div class="ctrl" id="menu" hidden>
+        <button class="btn" id="newBtn">Neues Spiel</button>
+        <button class="btn" id="setBtn">Einstellungen</button>
+        <button class="btn" id="logBtn">Spielverlauf</button>
+        <button class="btn" id="statsBtn">Statistik</button>
+        <button class="btn" id="rulesBtn" hidden>Regeln &amp; Varianten</button>
+        <button class="btn" id="aboutBtn">Über Ändi Dog</button>
+        <p class="ver" id="appVer">Version 0.2.17</p>
+      </div>
+    </header>
+    <main class="layout">
+      <div class="boardArea">
+        <div class="boardBox">
+          <svg class="boardShadow" viewBox="0 0 400 400" aria-hidden="true">
+            <defs>
+              <filter id="bsh1" x="-20%" y="-20%" width="140%" height="150%">
+                <feGaussianBlur stdDeviation="5.5" />
+              </filter>
+              <filter id="bsh2" x="-5%" y="-5%" width="110%" height="112%">
+                <feGaussianBlur stdDeviation="1.2" />
+              </filter>
+            </defs>
+            <polygon
+              points="100 5 300 5 395 100 395 300 300 395 100 395 5 300 5 100"
+              transform="translate(0 7.5)"
+              fill="#000"
+              fill-opacity=".36"
+              filter="url(#bsh1)"
+            />
+            <polygon
+              points="100 5 300 5 395 100 395 300 300 395 100 395 5 300 5 100"
+              transform="translate(0 1.5)"
+              fill="#000"
+              fill-opacity=".22"
+              filter="url(#bsh2)"
+            />
+          </svg>
+          <div class="boardWrap"><svg id="board" viewBox="0 0 400 400" role="img" aria-label="Spielbrett"></svg></div>
+        </div>
+      </div>
+      <section class="panel">
+        <div class="statusBox">
+          <p id="status" aria-live="polite"></p>
+          <div id="jokerPick" hidden></div>
+          <button class="jkArrow l" id="jkL" hidden aria-label="Weitere Werte links">‹</button
+          ><button class="jkArrow r" id="jkR" hidden aria-label="Weitere Werte rechts">›</button>
+        </div>
+        <div id="hand"></div>
+        <div class="actions">
+          <button class="btn primary" id="actBtn" hidden></button
+          ><button class="btn" id="cancelBtn" hidden>Zug abbrechen</button
+          ><button class="btn" id="undoBtn" hidden>↶ Letzten Zug zurücknehmen</button>
+        </div>
+      </section>
+    </main>
+    <dialog id="logDlg" aria-labelledby="logTitle">
+      <h2 id="logTitle">Spielverlauf</h2>
+      <ol id="log"></ol>
+      <p style="margin-top: 14px"><button class="btn primary" id="logClose">Schliessen</button></p>
+    </dialog>
+    <dialog id="aboutDlg" aria-labelledby="aboutTitle">
+      <h2 id="aboutTitle">Über Ändi Dog</h2>
+      <p id="aboutVer" class="muted"></p>
+      <h3>Kontakt</h3>
+      <p>
+        Fehler, Wünsche oder Fragen:
+        <a id="ghLink" href="https://github.com/abonhote/aendi-dog" target="_blank" rel="noopener"
+          >Ändi Dog auf GitHub</a
+        >
+      </p>
+      <p class="muted">Für eine Fehlermeldung die Angaben kopieren und dort einfügen.</p>
+      <label class="opt"><input type="checkbox" id="reportLog" /> Spielverlauf mitkopieren</label>
+      <label class="opt"><input type="checkbox" id="reportBoard" /> Spielbrett mitkopieren</label>
+      <p style="margin-top: 14px">
+        <button class="btn" id="reportCopy">Angaben kopieren</button>
+        <button class="btn primary" id="aboutClose">Schliessen</button>
+      </p>
+    </dialog>
+    <dialog id="setDlg" aria-labelledby="setTitle">
+      <h2 id="setTitle">Einstellungen</h2>
+      <div class="setGrid" id="seatRows"></div>
+      <div class="setSel">
+        <label
+          >Ansicht
+          <select id="view">
+            <option value="2d">Flach</option>
+            <option value="3d">3D</option>
+            <option value="pov">Murmelsicht</option>
+          </select></label
+        >
+        <label
+          >Gegner
+          <select id="lvl">
+            <option value="easy">Leicht</option>
+            <option value="medium">Mittel</option>
+            <option value="hard" selected>Stark</option>
+          </select></label
+        >
+        <label
+          >Tempo
+          <select id="spd">
+            <option value="slow">Ruhig</option>
+            <option value="normal" selected>Normal</option>
+            <option value="fast">Zügig</option>
+          </select></label
+        >
+        <label
+          >Darstellung
+          <select id="theme">
+            <option value="auto">Automatisch</option>
+            <option value="light">Hell</option>
+            <option value="dark">Dunkel</option>
+          </select></label
+        >
+        <label
+          >Töne
+          <select id="snd">
+            <option value="1">Ein</option>
+            <option value="0">Aus</option>
+          </select></label
+        >
+        <label
+          >Gewinnanimation
+          <select id="fx">
+            <option value="1">Ein</option>
+            <option value="0">Aus</option>
+          </select></label
+        >
+        <label
+          >Doppeltipp
+          <select id="dbl">
+            <option value="300">0,3 s</option>
+            <option value="500">0,5 s</option>
+            <option value="800">0,8 s</option>
+            <option value="1200">1,2 s</option>
+            <option value="0">ohne Limit</option>
+          </select></label
+        >
+      </div>
+      <div class="actions">
+        <button class="btn primary" id="setSave">Speichern</button>
+        <button class="btn" id="setCancel">Abbrechen</button>
+        <button class="btn plain" id="setReset">Zurücksetzen</button>
+      </div>
+      <div class="colPop" id="colPop" role="listbox" aria-label="Farbe wählen" hidden></div>
+    </dialog>
+    <dialog id="newDlg" aria-labelledby="newTitle">
+      <h2 id="newTitle">Neues Spiel</h2>
+      <p class="muted">Diese Einstellungen gelten für das ganze Spiel und lassen sich währenddessen nicht ändern.</p>
+      <div id="ngRules">
+        <h3>Varianten</h3>
+        <label class="opt"
+          ><input type="checkbox" id="ngCan" /> Kanadische 7er-Regel: Mit jeder 7 darfst du auch die Murmeln deines
+          Partners fahren.</label
+        >
+        <label class="opt"
+          ><input type="checkbox" id="ngJok" /> Die achte Murmel darf nicht mit dem Joker ins Ziel.</label
+        >
+      </div>
+      <p class="muted" id="ngWarn" hidden>Das laufende Spiel wird beendet und nicht in der Statistik gezählt.</p>
+      <div class="actions" style="margin-top: 14px">
+        <button class="btn primary" id="ngStart">Spiel starten</button
+        ><button class="btn" id="ngCancel">Abbrechen</button>
+      </div>
+    </dialog>
+    <dialog id="stats" aria-labelledby="statsTitle">
+      <h2 id="statsTitle">Statistik</h2>
+      <div id="statsBody"></div>
+      <p style="margin-top: 16px"><button class="btn" id="statsReset">Statistik zurücksetzen …</button></p>
+      <div id="statsConfirm" class="confirmBox danger" hidden role="alertdialog">
+        <p>Alle gespeicherten Partien werden gelöscht. Wirklich zurücksetzen?</p>
+        <div class="actions">
+          <button class="btn primary" id="statsYes">Ja, löschen</button
+          ><button class="btn" id="statsNo">Abbrechen</button>
+        </div>
+      </div>
+      <p style="margin-top: 14px"><button class="btn primary" id="statsClose">Schliessen</button></p>
+    </dialog>
+    <dialog id="rules">
+      <h2>So wird gespielt</h2>
+      <p>
+        <span id="teamLine">Du (Blau) spielst mit Grün gegen Rot und Gelb.</span> Erst wenn alle acht Murmeln eines
+        Teams im Ziel sind, hat das Team gewonnen. Gespielt und gefahren wird im Gegenuhrzeigersinn.
+      </p>
+      <h3>Runden</h3>
+      <p>
+        Es werden 6, 5, 4, 3 und 2 Karten verteilt, dann beginnt es wieder bei 6. In jeder Runde tauschen die Partner
+        verdeckt eine Karte. Der Spielbeginn wandert jede Runde eine Person weiter. Wer mit keiner Karte fahren kann,
+        scheidet für diese Runde aus, seine Karten verfallen.
+      </p>
+      <h3>Karten</h3>
+      <ul>
+        <li><b>Ass</b>: Start oder 1 bzw. 11 vorwärts.</li>
+        <li><b>König</b>: Start oder 13 vorwärts.</li>
+        <li><b>Dame</b> (Ober): 12 vorwärts.</li>
+        <li>
+          <b>Bube</b> (Under): eine eigene Murmel mit einer des Gegners oder Partners tauschen, auch wenn das ein
+          Nachteil ist. Ohne erlaubten Tausch kann er nicht gespielt werden.
+        </li>
+        <li><b>4</b>: 4 vor- oder rückwärts.</li>
+        <li>
+          <b>7</b>: in beliebige Schritte vorwärts aufteilbar, alle 7 müssen gefahren werden. Jede überholte Murmel geht
+          zurück in den Zwinger, auch die eigene.
+        </li>
+        <li><b>Joker</b>: Start oder Einsatz nach Wunsch.</li>
+        <li><b>2, 3, 5, 6, 8, 9, 10</b>: so viele Felder vorwärts.</li>
+      </ul>
+      <h3>Wichtig</h3>
+      <ul>
+        <li>
+          Landen zwei Murmeln auf demselben Feld, muss die zuerst dagewesene zurück in den Zwinger, auch eine eigene.
+        </li>
+        <li>
+          Eine Murmel, die vom Zwinger auf den Start kommt, blockiert den Durchgang für alle und ist geschützt. Kommt
+          sie später erneut auf den Start, blockiert sie nicht mehr.
+        </li>
+        <li>
+          Ins Ziel geht’s erst, wenn der eigene Start zum zweiten Mal berührt wird, vor- oder rückwärts. Im Ziel wird
+          nicht übersprungen und nicht rückwärts gefahren.
+        </li>
+        <li>Der schnellste Weg: Start, mit der 4 zurück, dann mit 5 bis 8 direkt ins Ziel.</li>
+        <li>
+          Sind alle eigenen Murmeln im Ziel, spielst du mit denen deines Partners weiter. Den Rest einer 7 darfst du
+          dafür schon verwenden.
+        </li>
+      </ul>
+      <h3>Varianten</h3>
+      <p class="muted">
+        Die Varianten gelten fürs ganze Spiel. Wählen kannst du sie beim Start eines neuen Spiels (☰ → Neues Spiel).
+      </p>
+      <label class="opt"
+        ><input type="checkbox" id="optCan" disabled /> Kanadische 7er-Regel: Mit jeder 7 darfst du auch die Murmeln
+        deines Partners fahren.</label
+      >
+      <label class="opt"
+        ><input type="checkbox" id="optJok" disabled /> Die achte Murmel darf nicht mit dem Joker ins Ziel.</label
+      >
+      <h3>Bedienung</h3>
+      <p>
+        Tippe eine Karte, dann die markierte Murmel und das Zielfeld. Bei der 7 wählst du so lange Murmeln und Felder,
+        bis alle sieben Schritte verteilt sind.
+      </p>
+      <p>
+        Unter „Ansicht“ kannst du das Brett in 3D drehen und zoomen. In der Murmelsicht fährt die Kamera mit der Murmel
+        mit, die gerade unterwegs ist oder die du ausgewählt hast. Die Karte oben rechts zeigt dabei das ganze Brett von
+        oben, und du kannst auch dort Murmeln und Felder antippen.
+      </p>
+      <p style="margin-top: 14px"><button class="btn primary" id="rulesClose">Verstanden</button></p>
+    </dialog>
+    <div id="winScrim" aria-hidden="true"></div>
+    <canvas id="winFx" aria-hidden="true"></canvas>
+    <button class="btn primary" id="newFloat" type="button" hidden>Neues Spiel</button>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
 </html>

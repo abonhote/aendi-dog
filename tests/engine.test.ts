@@ -7,8 +7,29 @@
  */
 import { afterEach, describe, expect, test } from 'vitest';
 import {
-  OPT, TUNE, aiChoose, aiGive, applyAll, applySeg, cloneMs, endgameGive, feats, initMarbles, isLead, killGive, legalMoves, makeDeck, pTrapWorks, sevenOptions, teamWon, trapBonus, winGive,
-  type Board, type Card, type Move, type Rank,
+  OPT,
+  TUNE,
+  aiChoose,
+  aiGive,
+  applyAll,
+  applySeg,
+  cloneMs,
+  endgameGive,
+  feats,
+  initMarbles,
+  isLead,
+  killGive,
+  legalMoves,
+  makeDeck,
+  pTrapWorks,
+  sevenOptions,
+  teamWon,
+  trapBonus,
+  winGive,
+  type Board,
+  type Card,
+  type Move,
+  type Rank,
 } from '../src/engine';
 
 // ---------------------------------------------------------------- Hilfen
@@ -35,7 +56,10 @@ const moves = (ms: Board, p: number, h: Card[]) => legalMoves(ms, p, h, true); /
 const list = (ms: Board, p: number, h: Card[]) => moves(ms, p, h).map(str);
 const find = (ms: Board, p: number, h: Card[], s: string) => moves(ms, p, h).find(mv => str(mv) === s);
 
-afterEach(() => { OPT.canadian = false; OPT.jokerNo8 = false; });
+afterEach(() => {
+  OPT.canadian = false;
+  OPT.jokerNo8 = false;
+});
 
 // ---------------------------------------------------------------- Tests
 
@@ -69,8 +93,8 @@ describe('Blockade auf dem Start', () => {
     const ms = board({ 8: 'T32f', 0: 'T30' });
     expect(list(ms, 0, hand('5'))).toHaveLength(0);
     const ass = list(ms, 0, hand('A'));
-    expect(ass).toContain('0:T31');          // 1 vorwärts geht
-    expect(ass).not.toContain('0:T41');      // 11 vorwärts nicht
+    expect(ass).toContain('0:T31'); // 1 vorwärts geht
+    expect(ass).not.toContain('0:T41'); // 11 vorwärts nicht
   });
 
   test('… und nicht geschlagen werden (Landen verboten)', () => {
@@ -193,7 +217,8 @@ describe('Team', () => {
   test('gewonnen erst, wenn alle acht Murmeln im Ziel sind', () => {
     const ms = board({ 0: 'G0', 1: 'G1', 2: 'G2', 3: 'G3', 8: 'G0', 9: 'G1', 10: 'G2' });
     expect(teamWon(ms, 0)).toBe(false);
-    ms[11].loc = 'G'; ms[11].pos = 3;
+    ms[11].loc = 'G';
+    ms[11].pos = 3;
     expect(teamWon(ms, 0)).toBe(true);
   });
 });
@@ -242,7 +267,18 @@ describe('Computergegner', () => {
   test('bringt eine Murmel ins Ziel, statt sie ungeschützt stehen zu lassen', () => {
     // Fall aus dem Spiel: Grün hat alle im Ziel und spielt mit Blau.
     // Blau: zwei im Ziel, eine frisch auf dem Start, eine 4 vor dem Start.
-    const ms = board({ 0: 'G3', 1: 'G2', 2: 'T0f', 3: 'T60', 8: 'G0', 9: 'G1', 10: 'G2', 11: 'G3', 4: 'T20', 12: 'T50' });
+    const ms = board({
+      0: 'G3',
+      1: 'G2',
+      2: 'T0f',
+      3: 'T60',
+      8: 'G0',
+      9: 'G1',
+      10: 'G2',
+      11: 'G3',
+      4: 'T20',
+      12: 'T50',
+    });
     const mv = aiChoose(ms, 2, hand('7', '9', '5'), 'hard')!;
     expect(applyAll(ms, mv.segs).ms[3].loc).toBe('G');
   });
@@ -294,10 +330,12 @@ describe('Deine Tauschregeln', () => {
 
 describe('Siegkarte beim Tausch', () => {
   // Grün hat alle Murmeln im Ziel und fährt mit Blau; Blaus letzte Murmel braucht genau eine 5.
-  const endspiel = () => board({ 8: 'G0', 9: 'G1', 10: 'G2', 11: 'G3', 0: 'G3', 1: 'G2', 2: 'G1', 3: 'T60', 4: 'T30', 12: 'T50' });
+  const endspiel = () =>
+    board({ 8: 'G0', 9: 'G1', 10: 'G2', 11: 'G3', 0: 'G3', 1: 'G2', 2: 'G1', 3: 'T60', 4: 'T30', 12: 'T50' });
 
   test('zieht Grün vor dir, behält er die 5 und gewinnt selbst', () => {
-    const ms = endspiel(), h = hand('5', '9');
+    const ms = endspiel(),
+      h = hand('5', '9');
     expect(aiGive(ms, 2, h, null, true, true).r).toBe('9');
     const mv = aiChoose(ms, 2, [h[0], ...hand('2')], 'hard')!;
     expect(teamWon(applyAll(ms, mv.segs).ms, 0)).toBe(true);
@@ -335,7 +373,12 @@ describe('Partnermurmeln nur mit Grund (kanadische 7)', () => {
   test('lückenlos ins Ziel ja, mit Lücke nur bei Gefahr', () => {
     OPT.canadian = true;
     expect(str(aiChoose(board({ 8: 'T40', 12: 'T20', 0: 'T61' }), 2, hand('7'), 'hard')!)).toBe('0:G0_3');
-    expect(usesBlue(board({ 8: 'T40', 12: 'T20', 0: 'T58' }), aiChoose(board({ 8: 'T40', 12: 'T20', 0: 'T58' }), 2, hand('7'), 'hard')!)).toBe(false);
+    expect(
+      usesBlue(
+        board({ 8: 'T40', 12: 'T20', 0: 'T58' }),
+        aiChoose(board({ 8: 'T40', 12: 'T20', 0: 'T58' }), 2, hand('7'), 'hard')!,
+      ),
+    ).toBe(false);
     const gefahr = board({ 8: 'T40', 12: 'T20', 0: 'T58', 4: 'T55' });
     expect(str(aiChoose(gefahr, 2, hand('7'), 'hard')!)).toBe('0:G0_0');
   });
@@ -380,7 +423,9 @@ describe('Sieben: dieselbe Murmel mehrmals, Murmeln abwechselnd', () => {
 
   test('alle vier Murmeln abwechselnd: A, B, C, D, A, B, C je +1', () => {
     let ms = board({ 0: 'T0f', 1: 'T2', 2: 'T5', 3: 'T9' });
-    [0, 1, 2, 3, 0, 1, 2].forEach((m, i) => { ms = step(ms, 7 - i, m, 1).ms; });
+    [0, 1, 2, 3, 0, 1, 2].forEach((m, i) => {
+      ms = step(ms, 7 - i, m, 1).ms;
+    });
     expect([0, 1, 2, 3].map(i => ms[i].pos)).toEqual([2, 4, 7, 10]);
   });
 
@@ -487,7 +532,21 @@ describe('Fertiger Partner: Tausch (nur Stufe Stark)', () => {
 describe('Deutlicher Vorsprung (nur Stufe Stark)', () => {
   // Deine Lage: Blau (du) alle vier im Ziel, Grün (Partner) drei im Ziel, seine letzte Murmel frisch auf dem Start (Feld 32).
   // Gegner: Rot eine, Gelb zwei im Ziel (zusammen 3), eine Gelbe Murmel steht 10 Felder vor Grüns Start (Feld 42).
-  const lage = () => board({ 0: 'G3', 1: 'G2', 2: 'G1', 3: 'G0', 8: 'G3', 9: 'G2', 10: 'G1', 11: 'T32f', 4: 'G3', 12: 'G3', 13: 'G2', 14: 'T42' });
+  const lage = () =>
+    board({
+      0: 'G3',
+      1: 'G2',
+      2: 'G1',
+      3: 'G0',
+      8: 'G3',
+      9: 'G2',
+      10: 'G1',
+      11: 'T32f',
+      4: 'G3',
+      12: 'G3',
+      13: 'G2',
+      14: 'T42',
+    });
   const zug = (h: Card[], level: 'easy' | 'medium' | 'hard') => {
     const mv = aiChoose(lage(), 2, h, level)!;
     return `${mv.card.r}${mv.card.r === 'JO' ? '(' + mv.val + ')' : ''}`;
@@ -515,21 +574,41 @@ describe('Deutlicher Vorsprung (nur Stufe Stark)', () => {
   });
 
   test('ohne Vorsprung wird weiter geschlagen (Gegner 5 im Ziel)', () => {
-    const ms = board({ 0: 'G3', 1: 'G2', 2: 'G1', 3: 'G0', 8: 'G3', 9: 'G2', 10: 'G1', 11: 'T32f', 4: 'G3', 5: 'G2', 12: 'G3', 13: 'G2', 14: 'T42', 15: 'G1' });
+    const ms = board({
+      0: 'G3',
+      1: 'G2',
+      2: 'G1',
+      3: 'G0',
+      8: 'G3',
+      9: 'G2',
+      10: 'G1',
+      11: 'T32f',
+      4: 'G3',
+      5: 'G2',
+      12: 'G3',
+      13: 'G2',
+      14: 'T42',
+      15: 'G1',
+    });
     const mv = aiChoose(ms, 2, hand('JO', '7', '9', 'D', '3'), 'hard')!;
     expect(mv.card.r + (mv.card.r === 'JO' ? '(' + mv.val + ')' : '')).toBe('JO(10)');
   });
 
   test('der Regler leadL = 0 schaltet die Taktik aus', () => {
     const alt = TUNE.leadL;
-    try { TUNE.leadL = 0; expect(zug(hand('JO', '7', '9', 'D', '3'), 'hard')).toBe('JO(10)'); } finally { TUNE.leadL = alt; }
+    try {
+      TUNE.leadL = 0;
+      expect(zug(hand('JO', '7', '9', 'D', '3'), 'hard')).toBe('JO(10)');
+    } finally {
+      TUNE.leadL = alt;
+    }
   });
 
   test('Kartentausch: im Vorsprung gibt es keine Karte zum Schlagen mehr', () => {
     // Du (Blau) hast eine Murmel auf der Bahn, die einen Gegner mit der 4 rückwärts schlagen könnte; Partner Grün gibt.
     const ms = board({ 0: 'G3', 1: 'G2', 2: 'G1', 3: 'T20', 8: 'G3', 9: 'G2', 10: 'G1', 11: 'G0', 12: 'T16', 4: 'G3' });
     const h = hand('4', '2', '3');
-    expect(killGive(ms, 2, h)).not.toBe(null);                       // ohne Vorsprungs-Regel würde die 4 gegeben
+    expect(killGive(ms, 2, h)).not.toBe(null); // ohne Vorsprungs-Regel würde die 4 gegeben
     expect(aiGive(ms, 2, h, null, true, true, true).r).not.toBe('4'); // im Vorsprung nicht mehr (Stark)
   });
 });
@@ -542,7 +621,8 @@ describe('Falle auf dem Startfeld (nur Stufe Stark)', () => {
     if (blauAufBahn) spec[13] = 'T20';
     return board(spec);
   };
-  const tausch = (ms: Board, h: Card[]) => legalMoves(ms, 2, h, true).find(m => m.segs[0].t === 'sw' && m.segs[0].m === 8)!;
+  const tausch = (ms: Board, h: Card[]) =>
+    legalMoves(ms, 2, h, true).find(m => m.segs[0].t === 'sw' && m.segs[0].m === 8)!;
   const ctx5 = { n: 5, cnt: [5, 5, 5, 5] };
   const zug = (ms: Board, h: Card[], level: 'easy' | 'medium' | 'hard', ctx: { n: number; cnt: number[] } | null) => {
     const mv = aiChoose(ms, 2, h, level, null, ctx)!;
@@ -552,7 +632,7 @@ describe('Falle auf dem Startfeld (nur Stufe Stark)', () => {
   test('bei 5 Karten tauscht Olaf seine bedrohte Murmel mit einer Murmel von Bertis Partner', () => {
     expect(zug(lage(), hand('B', '3', '8', '5', '9'), 'hard', ctx5)).toBe('Tausch');
     const mv = aiChoose(lage(), 2, hand('B', '3', '8', '5', '9'), 'hard', null, ctx5)!;
-    expect(mv.segs[0]).toEqual({ t: 'sw', m: 8, o: 4, to: 'T17' });   // mit Rolands Murmel, nicht mit der geschützten frischen
+    expect(mv.segs[0]).toEqual({ t: 'sw', m: 8, o: 4, to: 'T17' }); // mit Rolands Murmel, nicht mit der geschützten frischen
   });
 
   test('auch bei 6 Karten', () => {
@@ -561,7 +641,12 @@ describe('Falle auf dem Startfeld (nur Stufe Stark)', () => {
 
   test('ohne die Falle würde er in dieser Stellung nicht tauschen', () => {
     const alt = TUNE.trap;
-    try { TUNE.trap = 0; expect(zug(lage(), hand('B', '3', '8', '5', '9'), 'hard', ctx5)).toBe('Zug'); } finally { TUNE.trap = alt; }
+    try {
+      TUNE.trap = 0;
+      expect(zug(lage(), hand('B', '3', '8', '5', '9'), 'hard', ctx5)).toBe('Zug');
+    } finally {
+      TUNE.trap = alt;
+    }
   });
 
   test('nur bei Runden mit 5 oder 6 Karten', () => {
@@ -582,10 +667,12 @@ describe('Falle auf dem Startfeld (nur Stufe Stark)', () => {
   test('nur auf Stufe Stark', () => {
     const alt = TUNE.trap;
     try {
-      TUNE.trap = 100;                                                                // so gross, dass der Zufall von „Mittel“ nichts ändert
+      TUNE.trap = 100; // so gross, dass der Zufall von „Mittel“ nichts ändert
       expect(zug(lage(), hand('B', '3', '8', '5', '9'), 'hard', ctx5)).toBe('Tausch');
       expect(zug(lage(), hand('B', '3', '8', '5', '9'), 'medium', ctx5)).toBe('Zug');
-    } finally { TUNE.trap = alt; }
+    } finally {
+      TUNE.trap = alt;
+    }
   });
 
   test('Wahrscheinlichkeit: mit kanadischer Sieben wirkt die Falle viel seltener (Berti kann mit 7 oder Joker als 7 ausweichen)', () => {
@@ -602,7 +689,7 @@ describe('Falle auf dem Startfeld (nur Stufe Stark)', () => {
     expect(mitJoker.val).toBe('7');
     expect(applyAll(nach, mitJoker.segs).killed).toEqual([]);
     const nurAss = aiChoose(nach, 3, hand('A', '3', '4', '9', '10'), 'hard', null, ctx5)!;
-    expect(nurAss.segs[0].t).toBe('out');                                           // ohne 7 und Joker ist er gezwungen
-    expect(applyAll(nach, nurAss.segs).killed).toEqual([4]);                         // und schlägt seinen Partner
+    expect(nurAss.segs[0].t).toBe('out'); // ohne 7 und Joker ist er gezwungen
+    expect(applyAll(nach, nurAss.segs).killed).toEqual([4]); // und schlägt seinen Partner
   });
 });

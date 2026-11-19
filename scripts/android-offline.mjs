@@ -13,7 +13,9 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 
 const file = 'android/app/src/main/AndroidManifest.xml';
 if (!existsSync(file)) {
-  console.log('Datei android/…/AndroidManifest.xml fehlt – erst „npx cap add android“ ausführen. Offline-Anpassung übersprungen.');
+  console.log(
+    'Datei android/…/AndroidManifest.xml fehlt – erst „npx cap add android“ ausführen. Offline-Anpassung übersprungen.',
+  );
   process.exit(0);
 }
 

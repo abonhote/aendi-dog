@@ -3,10 +3,23 @@
  *   npm run sim                 → 20 Partien Stark gegen Mittel
  *   npm run sim -- hard easy 50 → Stufe Team Blau/Grün, Stufe Team Rot/Gelb, Anzahl
  */
-import { SIZES, aiChoose, aiGive, applyAll, initMarbles, makeDeck, teamWon, type Card, type Level } from '../src/engine';
+import {
+  SIZES,
+  aiChoose,
+  aiGive,
+  applyAll,
+  initMarbles,
+  makeDeck,
+  teamWon,
+  type Card,
+  type Level,
+} from '../src/engine';
 
 function play(levels: [Level, Level]): number {
-  let ms = initMarbles(), deck: Card[] = [], cycle = 0, start = 0;
+  let ms = initMarbles(),
+    deck: Card[] = [],
+    cycle = 0,
+    start = 0;
   for (let round = 0; round < 300; round++) {
     if (cycle % 5 === 0) deck = makeDeck();
     const n = SIZES[cycle++ % 5];
@@ -36,5 +49,10 @@ function play(levels: [Level, Level]): number {
 const [a = 'hard', b = 'medium', count = '20'] = process.argv.slice(2);
 const wins = [0, 0];
 const t0 = Date.now();
-for (let i = 0; i < +count; i++) { const w = play([a as Level, b as Level]); if (w >= 0) wins[w]++; }
-console.log(`Blau/Grün (${a}) ${wins[0]} : ${wins[1]} Rot/Gelb (${b})  –  ${((Date.now() - t0) / +count).toFixed(0)} ms pro Partie`);
+for (let i = 0; i < +count; i++) {
+  const w = play([a as Level, b as Level]);
+  if (w >= 0) wins[w]++;
+}
+console.log(
+  `Blau/Grün (${a}) ${wins[0]} : ${wins[1]} Rot/Gelb (${b})  –  ${((Date.now() - t0) / +count).toFixed(0)} ms pro Partie`,
+);

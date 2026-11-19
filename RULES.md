@@ -2,13 +2,13 @@
 
 Keine Spielregeln, sondern vorgegebene Spielweise. Die Spielregeln selbst stehen im Regeln-Dialog (`index.html`, `<dialog id="rules">`) und in `src/engine.ts`.
 
-**Wer sich daran hält:** Grün (dein Partner) immer, Rot und Gelb auf der Stufe „Stark“. Punkte mit dem Vermerk *alle Stufen* gelten für jeden Computerspieler.
+**Wer sich daran hält:** Grün (dein Partner) immer, Rot und Gelb auf der Stufe „Stark“. Punkte mit dem Vermerk _alle Stufen_ gelten für jeden Computerspieler.
 
 Alle Funktionen liegen in `src/engine.ts`, sofern nicht anders angegeben.
 
 ## Kartentausch
 
-1. **Siegkarte** *(alle Stufen)*: Wer eine Karte hält, mit der das Team sofort gewinnt, behält sie, wenn er in dieser Runde vor seinem Partner zieht. Zieht der Partner zuerst und gewinnt damit, bekommt er sie. Von zwei gleichen Siegkarten darf eine weg.
+1. **Siegkarte** _(alle Stufen)_: Wer eine Karte hält, mit der das Team sofort gewinnt, behält sie, wenn er in dieser Runde vor seinem Partner zieht. Zieht der Partner zuerst und gewinnt damit, bekommt er sie. Von zwei gleichen Siegkarten darf eine weg.
    → `winGive()`, aufgerufen in `aiGive()` mit `first` (wer zuerst zieht, `playsFirst()` in `app.ts`)
 2. **Selbst festgefahren:** Wer sich so oder so nicht bewegen kann, gibt dem Partner seine beste Karte: die 7, mit kanadischer Regel stattdessen die 4. Die 7 bleibt dann in der Hand, weil man damit die Murmeln des Partners fahren kann.
    → `ruleGive()`, Regel 1
@@ -33,7 +33,7 @@ Wirkung in einer nachgestellten Partie (du drei im Ziel, eine im Zwinger, Partne
 
 ## Spielzüge
 
-6. **Partner nicht blockieren** *(alle Stufen)*: Mit einer frisch herausgekommenen Murmel auf dem eigenen Start hält man den Partner nicht auf, wenn er bis zu 6 Felder dahinter steht. Gegner aufzuhalten lohnt sich dagegen.
+6. **Partner nicht blockieren** _(alle Stufen)_: Mit einer frisch herausgekommenen Murmel auf dem eigenen Start hält man den Partner nicht auf, wenn er bis zu 6 Felder dahinter steht. Gegner aufzuhalten lohnt sich dagegen.
    → `feats()`, Merkmal `K`
 7. **Keine Rückwärts-4 auf den Partner:** Nie mit der 4 vom eigenen Start zurückfahren, wenn das den Partner heimschickt. Ausnahme: Es gibt gar keinen anderen Zug.
    → `partnerBackPen()`
@@ -46,11 +46,11 @@ Wirkung in einer nachgestellten Partie (du drei im Ziel, eine im Zwinger, Partne
    Sind alle eigenen Murmeln im Ziel, fährt man nach den Regeln ohnehin mit denen des Partners. Dann gibt es keinen Abzug.
    → `partnerUsePen()`, `partnerGoalOk()`, `partnerGoalPen()`
 
-9. **Deutlicher Vorsprung** *(nur Stufe „Stark“, alle Computerspieler)*: Hat das eigene Team mindestens 6 Murmeln im Ziel und mindestens 3 mehr als die Gegner (zum Beispiel 7 gegen 3), zählt der Weg der Gegner in der Bewertung nur noch zu 35 %. Ein Schlag bringt dann kaum mehr als der sichere Weg zum Sieg, und die KI fährt lieber so, dass die letzte Murmel schnell und sicher heimkommt. Das Beispiel: Die letzte Murmel steht frisch auf dem Start, ein Joker kann entweder als 10 einen fast heimgekehrten Gegner schlagen oder als 4 zurückfahren (5 Felder vor dem Ziel, dann genügt eine 5). Mit dem Vorsprung wählt die KI die 4. Im Kartentausch gibt es im Vorsprung keine „Schlag-Karte“ mehr (Tauschregel 3).
+9. **Deutlicher Vorsprung** _(nur Stufe „Stark“, alle Computerspieler)_: Hat das eigene Team mindestens 6 Murmeln im Ziel und mindestens 3 mehr als die Gegner (zum Beispiel 7 gegen 3), zählt der Weg der Gegner in der Bewertung nur noch zu 35 %. Ein Schlag bringt dann kaum mehr als der sichere Weg zum Sieg, und die KI fährt lieber so, dass die letzte Murmel schnell und sicher heimkommt. Das Beispiel: Die letzte Murmel steht frisch auf dem Start, ein Joker kann entweder als 10 einen fast heimgekehrten Gegner schlagen oder als 4 zurückfahren (5 Felder vor dem Ziel, dann genügt eine 5). Mit dem Vorsprung wählt die KI die 4. Im Kartentausch gibt es im Vorsprung keine „Schlag-Karte“ mehr (Tauschregel 3).
    → `isLead()`, `scoreF()` (Gewicht `L`), `TUNE.leadL` (0 = aus, Stand 0,65), `ruleGive(…, noKill)`
 
-10. **Falle auf dem Startfeld** *(nur Stufe „Stark“, alle Computerspieler, nur bei Runden mit 5 oder 6 Karten)*: Steht eine eigene Murmel auf dem Startfeld eines Gegners X, der nichts auf der Bahn hat, aber Murmeln im Zwinger, und hat der Computer den Buben, tauscht er sie gegen eine Murmel von X' Partner (nicht gegen eine frische, die ist geschützt). Kommt X dann mit einer Startkarte heraus, schlägt er seine eigene Partnermurmel. Die KI rechnet den Zuschlag so: Gewicht (`TUNE.trap`, 1,5) × Wahrscheinlichkeit, dass die Falle wirkt (`pTrapWorks`) × Wert der Murmel auf dem Start von X (rund 57). X muss noch mindestens 4 Karten halten. Die Wahrscheinlichkeit beträgt ohne kanadische Sieben 60 / 68 / 75 % (X hält 4 / 5 / 6 Karten): Jede Startkarte (Ass, König, Joker) zwingt ihn herauszukommen. Mit kanadischer Sieben sind es nur etwa 30 %, denn X kann die Murmel seines Partners mit einer 7 oder einem Joker als 7 wegziehen, und genau das tut die KI auch (geprüft). Nur mit Ass oder König ohne 7 und Joker ist er gezwungen.
-   → `trapBonus()`, `pTrapWorks()`, `aiChoose(…, ctx)` mit `ctx = {n, cnt}` (Karten der Runde, Kartenzahl je Spieler); die App merkt sich die Rundengrösse in `S.roundN`.
+10. **Falle auf dem Startfeld** _(nur Stufe „Stark“, alle Computerspieler, nur bei Runden mit 5 oder 6 Karten)_: Steht eine eigene Murmel auf dem Startfeld eines Gegners X, der nichts auf der Bahn hat, aber Murmeln im Zwinger, und hat der Computer den Buben, tauscht er sie gegen eine Murmel von X' Partner (nicht gegen eine frische, die ist geschützt). Kommt X dann mit einer Startkarte heraus, schlägt er seine eigene Partnermurmel. Die KI rechnet den Zuschlag so: Gewicht (`TUNE.trap`, 1,5) × Wahrscheinlichkeit, dass die Falle wirkt (`pTrapWorks`) × Wert der Murmel auf dem Start von X (rund 57). X muss noch mindestens 4 Karten halten. Die Wahrscheinlichkeit beträgt ohne kanadische Sieben 60 / 68 / 75 % (X hält 4 / 5 / 6 Karten): Jede Startkarte (Ass, König, Joker) zwingt ihn herauszukommen. Mit kanadischer Sieben sind es nur etwa 30 %, denn X kann die Murmel seines Partners mit einer 7 oder einem Joker als 7 wegziehen, und genau das tut die KI auch (geprüft). Nur mit Ass oder König ohne 7 und Joker ist er gezwungen.
+    → `trapBonus()`, `pTrapWorks()`, `aiChoose(…, ctx)` mit `ctx = {n, cnt}` (Karten der Runde, Kartenzahl je Spieler); die App merkt sich die Rundengrösse in `S.roundN`.
 
 ## Ausprobiert und verworfen
 
