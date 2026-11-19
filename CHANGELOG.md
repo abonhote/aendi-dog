@@ -2,6 +2,15 @@
 
 Versionen nach [Semantic Versioning](https://semver.org/lang/de/): `0.0.x` = Entwicklungsstand vor der ersten Veröffentlichung.
 
+## 0.2.18
+
+- **Murmeln leichter antippen**, vor allem auf kleinen Bildschirmen: Ein Tipp muss die Murmel oder das Zielfeld nicht mehr genau treffen, es zählt das nächstgelegene gültige Ziel im Umkreis (halber Lochabstand, mindestens eine Trefferfläche von 48 dp).
+- **Zielfeld direkt antippen:** Ohne gewählte Murmel sind alle erreichbaren Zielfelder mit einem Punkt markiert. Kommt nur eine Murmel dorthin, zieht sie sofort; sonst fragt das Spiel, welche. Bei der Sieben wird weiterhin zuerst die Murmel gewählt.
+- **Murmel aufs Ziel ziehen** (2D-Brett): Die Murmel rastet auf dem nächsten gültigen Feld ein, Loslassen zieht.
+- **Fehler behoben:** Bei offenem Menü fuhren Murmeln und flogen Karten über das Menü. Jetzt hält das Spiel an, solange das Menü oder ein Dialog offen ist (Züge, Animationen und Töne), und läuft danach genau dort weiter.
+- **Fehler behoben:** Die beiden Checkboxen im Dialog „Neues Spiel“ waren unterschiedlich gross.
+- **Entwicklung:** Prettier formatiert den Code vor jedem Commit (pre-commit-Hook mit lint-staged). Abhängigkeiten nach `npm audit` aktualisiert.
+
 ## 0.2.17
 
 - **„Über Ändi Dog“ verweist auf GitHub** statt auf eine E-Mail-Adresse: Der Link öffnet https://github.com/abonhote/aendi-dog. „Angaben kopieren“ bleibt (Version, wahlweise Spielverlauf und Spielbrett) und kopiert jetzt immer alles, zum Einfügen in eine Fehlermeldung. `CONTACT_MAIL` und die Kürzung für den mailto-Link sind entfernt.

@@ -4,7 +4,7 @@
 
 ## Version
 
-Aktuell **0.2.17**. Die Versionsnummer steht an zwei Stellen und muss bei jeder neuen Version an beiden erhöht werden:
+Aktuell **0.2.18**. Die Versionsnummer steht an zwei Stellen und muss bei jeder neuen Version an beiden erhöht werden:
 
 - `package.json` → `"version"`
 - `index.html` → `<p class="ver" id="appVer">Version …</p>` (unten im ☰-Menü sichtbar)
