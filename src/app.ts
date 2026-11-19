@@ -644,8 +644,30 @@ function autoSel(){
 function targetsFor(id){
   const s=new Set();for(const c of UI.cand){const seg=c.segs[UI.k];if(seg&&segMatchMarble(seg,id))s.add(seg.to)}return s;
 }
+// Auf kleinen Screens sind die Löcher nur wenige Pixel gross: Statt exakt treffen zu müssen,
+// gewinnt die nächstgelegene gültige Murmel bzw. das nächste Zielfeld im Umkreis.
+// Der Umkreis ist der halbe Abstand zwischen zwei Nachbarlöchern, aber nie kleiner als eine
+// Trefferfläche von 48 dp Durchmesser (Mindestgrösse für Touch-Ziele nach den Android-/Material-Richtlinien).
+const MIN_TOUCH=48;
+const dist=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
+function holeGap(){
+  let g=Infinity;
+  for(let i=0;i<64;i++)g=Math.min(g,dist(TP[i],TP[(i+1)%64]));
+  for(let c=0;c<4;c++)for(let i=0;i<3;i++)g=Math.min(g,dist(goalPt(c,i),goalPt(c,i+1)));
+  return g;
+}
+function nearestHit(cx,cy){
+  const svg=$('board'),m=svg.getScreenCTM();if(!m)return null;
+  const s=Math.hypot(m.a,m.b);let best=null,bd=Math.max(MIN_TOUCH/2,holeGap()/2*s);
+  for(const h of $('hl').querySelectorAll('.hit')){
+    const x=+h.getAttribute('cx'),y=+h.getAttribute('cy'),px=m.a*x+m.c*y+m.e,py=m.b*x+m.d*y+m.f;
+    const d=Math.hypot(px-cx,py-cy);if(d<bd){bd=d;best=h}
+  }
+  return best;
+}
 function onBoardClick(e){
-  const t=e.target.closest('[data-to],[data-mid]');if(!t||busy||!UI.cand)return;
+  if(busy||!UI.cand)return;
+  const t=e.clientX!=null&&e.detail!==0?nearestHit(e.clientX,e.clientY):e.target.closest('[data-to],[data-mid]');if(!t)return;
   if(t.dataset.to){chooseTarget(t.dataset.to);return}
   const id=+t.dataset.mid;UI.sel=UI.sel===id&&selectableIds().size>1?null:id;render();
 }
