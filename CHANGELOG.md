@@ -2,6 +2,12 @@
 
 Versionen nach [Semantic Versioning](https://semver.org/lang/de/): `0.0.x` = Entwicklungsstand vor der ersten Veröffentlichung.
 
+## 0.2.19
+
+- **Spielende-Fenster:** Ob gewonnen oder verloren, ein Fenster zeigt das Ergebnis, mit den Knöpfen „Neues Spiel“ und „Statistik“. Bei einem Sieg kommt es erst nach der Gewinnanimation. „Brett ansehen“ oder ein Tipp daneben schliesst es.
+- **Kürzere Statuszeile:** Die Hinweise sind höchstens zwei Zeilen lang (etwa beim Kartentausch „Karte für Grün: zweimal antippen.“). Das Brett rutscht nicht mehr hoch und wird etwas grösser.
+- **Fehler behoben:** Am Spielende war „Neues Spiel“ kleiner als „Zurücknehmen“. Beide stehen jetzt gleich gross in einer Zeile.
+
 ## 0.2.18
 
 - **Murmeln leichter antippen**, vor allem auf kleinen Bildschirmen: Ein Tipp muss die Murmel oder das Zielfeld nicht mehr genau treffen, es zählt das nächstgelegene gültige Ziel im Umkreis (halber Lochabstand, mindestens eine Trefferfläche von 48 dp).
