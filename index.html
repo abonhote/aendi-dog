@@ -76,10 +76,22 @@
         <div class="actions">
           <button class="btn primary" id="actBtn" hidden></button
           ><button class="btn" id="cancelBtn" hidden>Zug abbrechen</button
-          ><button class="btn" id="undoBtn" hidden>↶ Letzten Zug zurücknehmen</button>
+          ><button class="btn" id="undoBtn" hidden>↶ Letzten Zug zurücknehmen</button
+          ><button class="btn primary" id="newFloat" type="button" hidden>Neues Spiel</button>
         </div>
       </section>
     </main>
+    <dialog id="endDlg" aria-labelledby="endTitle">
+      <div class="endBox">
+        <h2 id="endTitle"></h2>
+        <p id="endText"></p>
+        <div class="actions">
+          <button class="btn primary" id="endNew">Neues Spiel</button
+          ><button class="btn" id="endStats">Statistik</button>
+        </div>
+        <button class="btn plain" id="endClose">Brett ansehen</button>
+      </div>
+    </dialog>
     <dialog id="logDlg" aria-labelledby="logTitle">
       <h2 id="logTitle">Spielverlauf</h2>
       <ol id="log"></ol>
@@ -276,7 +288,6 @@
     </dialog>
     <div id="winScrim" aria-hidden="true"></div>
     <canvas id="winFx" aria-hidden="true"></canvas>
-    <button class="btn primary" id="newFloat" type="button" hidden>Neues Spiel</button>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

@@ -414,6 +414,7 @@ function newGame() {
   UI.recv = null;
   busy = false;
   WINFX.stop(true);
+  closeEnd();
   startRound();
 }
 // Zieht Spieler p in dieser Runde vor seinem Partner?
@@ -1131,7 +1132,7 @@ function proceed() {
     S.legal = legalMoves(S.marbles, 0, S.hands[0], false);
     if (!S.legal.length) {
       busy = true;
-      render('Keine deiner Karten ist spielbar. Du legst alle ab und setzt diese Runde aus.');
+      render('Keine Karte spielbar. Du setzt diese Runde aus.');
       {
         const g = GAME;
         later(
@@ -1878,7 +1879,7 @@ function fmtDur(sec, short) {
 }
 // ===== Gewinnanimation: „Großes Finale“ (Feuerwerk, Konfetti-Kanonen, am Ende Konfettiregen) =====
 // Wird nur gespielt, wenn dein Team gewinnt. Sie läuft über dem ganzen Bildschirm, das Brett bleibt dahinter sichtbar (leicht abgedunkelt),
-// ohne Ton und ohne Textfenster. Ein Tippen beendet sie. Bei „Bewegung reduzieren“ im System oder mit der Einstellung „Gewinnanimation: Aus“ gibt es sie nicht.
+// ohne Ton; das Ergebnisfenster kommt erst danach. Ein Tippen beendet sie. Bei „Bewegung reduzieren“ im System oder mit der Einstellung „Gewinnanimation: Aus“ gibt es sie nicht.
 // Farben: die vier Spielerfarben (so wie eingestellt), dazu Weiss und Lila.
 const FX_KEY = 'aendi-dog-fx';
 let FX_ON = true;
@@ -2139,7 +2140,11 @@ const WINFX = (() => {
     raf = requestAnimationFrame(frame);
   }
   // now = true: sofort aufräumen (neues Spiel, Zurücknehmen); false: das Brett wird sanft wieder hell (Tippen, Ende)
+  let onDone = null; // wird aufgerufen, wenn die Animation von selbst endet oder weggetippt wird (nicht bei stop(true))
   function stop(now) {
+    const cb = onDone;
+    onDone = null;
+    if (cb && !now) cb();
     if (!S && !raf && !scrim.style.opacity) return;
     if (raf) cancelAnimationFrame(raf);
     raf = 0;
@@ -2152,9 +2157,10 @@ const WINFX = (() => {
       scrim.style.transition = '';
     } else scrim.style.opacity = 0;
   }
-  function start() {
+  function start(done) {
     stop(true);
-    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return false;
+    onDone = done || null;
     resize();
     S = {
       t: 0,
@@ -2199,8 +2205,32 @@ const WINFX = (() => {
     },
   };
 })();
+// Spielende: Fenster mit dem Ergebnis. Bei einem Sieg mit Gewinnanimation erst danach (bzw. nach dem Wegtippen),
+// kurz verzögert, damit derselbe Tipp das Fenster nicht gleich wieder schliesst.
+let endTimer = 0;
 function winEnd() {
-  if (S.winner === 0 && FX_ON) WINFX.start();
+  const g = GAME;
+  const show = ms => {
+    clearTimeout(endTimer);
+    endTimer = setTimeout(() => {
+      if (g === GAME && S.phase === 'over') openEnd();
+    }, ms);
+  };
+  if (S.winner === 0 && FX_ON && WINFX.start(() => show(450)) !== false) return;
+  show(700);
+}
+function openEnd() {
+  const won = S.winner === 0;
+  $('endTitle').textContent = won ? 'Gewonnen!' : 'Verloren.';
+  $('endText').textContent = won
+    ? `Du und ${NAMES[2]} habt alle Murmeln im Ziel.`
+    : `${NAMES[1]} und ${NAMES[3]} waren schneller.`;
+  $('endDlg').className = won ? 'win' : 'lose';
+  if (!$('endDlg').open) $('endDlg').showModal();
+}
+function closeEnd() {
+  clearTimeout(endTimer);
+  if ($('endDlg').open) $('endDlg').close();
 }
 function recordGame() {
   const s = st();
@@ -2461,6 +2491,7 @@ function undoMove() {
   UI = freshUI();
   busy = false;
   WINFX.stop(true);
+  closeEnd();
   if (S.phase === 'exchange') {
     addLog('Du nimmst den Kartentausch zurück.', 'round');
     save();
@@ -2659,21 +2690,21 @@ function renderHand() {
 }
 // Lange Texte der Statuszeile. Die Statuszeile reserviert immer die Höhe des längsten möglichen Textes (reserveStatus),
 // damit das Brett nicht springt, wenn der Text wechselt. Neue lange Texte bitte in statusSamples() ergänzen.
-const txtExchange = (starter, give) =>
-  `${starter}. Tippe eine Karte ${DBL_MS > 0 ? 'zweimal kurz hintereinander' : 'zweimal'} oder wirf sie aufs Brett, um sie ${give} zu geben.`;
-const txtOwnIn = name => `Deine Murmeln sind im Ziel: Du fährst mit denen von ${name}. `;
+// Kurz halten: höchstens zwei Zeilen. Wer beginnt, steht schon in der Brettmitte.
+const txtExchange = give => `Karte für ${give}: zweimal antippen.`;
+const txtOwnIn = name => `Alle im Ziel. Du fährst mit ${name}.`;
 function statusSamples() {
   const L = NAMES.reduce((a, b) => (b.length > a.length ? b : a), ''); // längster Name
   return [
     `${L} gibt die Karten aus …`,
-    txtExchange(`${L} beginnt`, L),
+    txtExchange(L),
     `${L} ist am Zug …`,
-    txtOwnIn(L) + 'Tippe eine Karte an oder wirf sie aufs Brett.',
-    'Keine deiner Karten ist spielbar. Du legst alle ab und setzt diese Runde aus.',
+    txtOwnIn(L),
+    'Keine Karte spielbar. Du setzt diese Runde aus.',
     'Als welche Karte setzt du den Joker ein?',
     'Sieben: noch 7 Schritte. Wähle, wie weit sie fährt.',
     'Mit welcher Murmel tauschen?',
-    'Du bist dran. Tippe eine Karte an oder wirf sie aufs Brett.',
+    'Du bist dran. Wähle eine Karte.',
   ];
 }
 function reserveStatus() {
@@ -2715,12 +2746,12 @@ function renderStatus(msg) {
     const d = (S.roundStart + 3) % 4;
     t = `${d === 0 ? 'Du gibst' : NAMES[d] + ' gibt'} die Karten aus …`;
   } else if (S.phase === 'exchange') {
-    t = txtExchange(S.roundStart === 0 ? 'Du beginnst' : NAMES[S.roundStart] + ' beginnt', NAMES[2]);
+    t = txtExchange(NAMES[2]);
   } else if (S.turn !== 0) t = `${NAMES[S.turn]} ist am Zug …`;
   else {
     const c = ctrlColor(S.marbles, 0);
     const pre = c !== 0 ? txtOwnIn(NAMES[2]) : '';
-    if (!UI.card) t = pre + (pre ? '' : 'Du bist dran. ') + 'Tippe eine Karte an oder wirf sie aufs Brett.';
+    if (!UI.card) t = pre || 'Du bist dran. Wähle eine Karte.';
     else if (UI.card.r === 'JO' && !UI.val) t = 'Als welche Karte setzt du den Joker ein?';
     else if (UI.val === '7') {
       const used = UI.applied.reduce((a, s) => a + s.n, 0);
@@ -2972,6 +3003,18 @@ function init() {
   }
   $('newBtn').onclick = askNewGame;
   $('newFloat').onclick = askNewGame;
+  $('endNew').onclick = () => {
+    closeEnd();
+    askNewGame();
+  };
+  $('endStats').onclick = () => {
+    closeEnd();
+    openStats();
+  };
+  $('endClose').onclick = closeEnd;
+  $('endDlg').addEventListener('click', e => {
+    if (e.target === $('endDlg')) closeEnd(); // Tipp neben das Fenster schliesst es, dann sieht man das Brett
+  });
   // Spielende-Fenster: Tipp auf den Hintergrund schliesst es, damit man das Brett sieht
   // Spielende-Fenster: ein Tipp irgendwo schliesst es (ausser auf seine Knöpfe), damit man das Brett sieht.
   // pointerdown statt click, weil deaktivierte Handkarten kein click auslösen.

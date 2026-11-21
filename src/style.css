@@ -1485,11 +1485,44 @@ dialog ul {
   pointer-events: none;
   z-index: 41;
 }
+/* Spielende-Fenster: Ergebnis, dann „Neues Spiel“ und „Statistik“ gleich gross nebeneinander.
+   Der Inhalt liegt in .endBox, damit ein Tipp auf den Rand des Fensters nicht als Tipp daneben zählt. */
+#endDlg {
+  padding: 0;
+  width: min(360px, 92vw);
+  text-align: center;
+}
+#endDlg .endBox {
+  padding: 24px 22px 14px;
+}
+#endDlg h2 {
+  font-size: 34px;
+  margin: 0 0 6px;
+}
+#endDlg.win h2 {
+  color: var(--c0);
+}
+#endDlg #endText {
+  color: var(--muted);
+  margin: 0 0 18px;
+}
+#endDlg .actions {
+  flex-wrap: nowrap;
+}
+#endDlg .actions .btn {
+  flex: 1 1 0;
+  padding: 12px 10px;
+  font-size: 16px;
+}
+#endDlg #endClose {
+  margin-top: 10px;
+  font-size: 14px;
+}
+/* Steht in der Knopfzeile neben „Zurücknehmen“ (gleich gross), liegt aber über dem Abdunkeln der Gewinnanimation */
 #newFloat {
-  position: fixed;
-  right: 14px;
-  bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  position: relative;
   z-index: 42;
+  margin-left: auto;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
 }
 #newFloat[hidden] {
